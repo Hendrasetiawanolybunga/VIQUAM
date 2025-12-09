@@ -122,3 +122,79 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+JAZZMIN_SETTINGS = {
+    'site_title': 'Viquam ',
+    'site_header': 'Viquam',
+    'site_brand': 'Viquam ',
+    'site_logo_classes': 'img-circle',
+    'site_logo_alt': 'Viquam  ',
+    'welcome_sign': 'Selamat Datang',
+    'copyright': '2023 Viquam ',
+    'footer_text': 'Viquam',
+    
+    
+    
+     "icons": {
+        "auth": "fas fa-users-cog",
+        "core": "fas fa-box-open",
+        "auth.user": "fas fa-user-shield",
+        "auth.group": "fas fa-users",
+        "core.Pelanggan": "fa-solid fa-users",
+        "core.Produk": "fas fa-box",
+        "core.Pemesanan": "fas fa-receipt",
+        "core.Sopir": "fas fa-user",
+        "core.Kendaraan": "fas fa-car",
+        "core.Feedback": "fas fa-comment",
+        "core.DetailPemesanan": "fas fa-receipt",
+        "core.StokMasuk": "fas fa-box",
+    },
+
+
+     "order_with_respect_to": [
+        "auth", 
+        "core.Pelanggan",
+        "core.Produk",
+        "core.StokMasuk",
+        "core.Sopir",
+        "core.Kendaraan",
+        "core.Pemesanan",
+        "core.Feedback",
+    ],
+    # "show_ui_builder": True,
+   
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": True,
+    "brand_small_text": False,
+    "brand_colour": "navbar-lightblue",
+    "accent": "accent-lightblue",
+    "navbar": "navbar-white navbar-light",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-light-lightblue",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "simplex",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-outline-primary",
+        "secondary": "btn-outline-secondary",
+        "info": "btn-outline-info",
+        "warning": "btn-outline-warning",
+        "danger": "btn-danger",
+        "success": "btn-outline-success"
+    },
+    "actions_sticky_top": True
+}
