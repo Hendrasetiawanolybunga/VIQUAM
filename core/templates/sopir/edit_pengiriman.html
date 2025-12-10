@@ -1,0 +1,132 @@
+{% extends 'sopir/base.html' %}
+{% load humanize %}
+
+{% block title %}Verifikasi Pengiriman - VIQUAM{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+          
+            <p class="text-dark text-center">Verifikasi status pengiriman dan unggah bukti pengiriman</p>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Detail Pesanan #{{ pesanan.idPemesanan }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6><strong><i class="fas fa-user me-2"></i>Informasi Pelanggan</strong></h6>
+                            <p class="mb-1"><strong>Nama:</strong> {{ pesanan.idPelanggan.nama }}</p>
+                            <p class="mb-1"><strong>No. WA:</strong> {{ pesanan.idPelanggan.noWa }}</p>
+                            <p class="mb-1"><strong>Alamat:</strong> {{ pesanan.alamatPengiriman }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><strong><i class="fas fa-info-circle me-2"></i>Informasi Pesanan</strong></h6>
+                            <p class="mb-1"><strong>Tanggal:</strong> {{ pesanan.tanggalPemesanan|date:"d/m/Y H:i" }}</p>
+                            <p class="mb-1"><strong>Status:</strong> 
+                                <span class="badge bg-warning">{{ pesanan.status }}</span>
+                            </p>
+                            <p class="mb-1"><strong>Total:</strong> Rp {{ pesanan.total|intcomma }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Detail Produk -->
+                <div class="col-lg-7 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-box-open me-2"></i>Detail Produk</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Produk</th>
+                                            <th>Jumlah</th>
+                                            <th>Harga Satuan</th>
+                                            <th>Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for detail in pesanan.detailpemesanan_set.all %}
+                                        <tr>
+                                            <td>{{ detail.idProduk.namaProduk }}</td>
+                                            <td>{{ detail.jumlah }}</td>
+                                            <td>Rp {{ detail.idProduk.hargaPerDus|intcomma }}</td>
+                                            <td>Rp {{ detail.subTotal|intcomma }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Verifikasi -->
+                <div class="col-lg-5 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-camera me-2"></i>Verifikasi Pengiriman</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data" action="/sopir/edit-pengiriman/{{ pesanan.idPemesanan }}/">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">Status Pengiriman</label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="text-danger">
+                                            {{ form.status.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.fotoPengiriman.id_for_label }}" class="form-label">Foto Bukti Pengiriman</label>
+                                    {{ form.fotoPengiriman }}
+                                    {% if form.fotoPengiriman.errors %}
+                                        <div class="text-danger">
+                                            {{ form.fotoPengiriman.errors }}
+                                        </div>
+                                    {% endif %}
+                                    {% if pesanan.fotoPengiriman %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">Foto saat ini:</small><br>
+                                            <img src="{{ pesanan.fotoPengiriman.url }}" alt="Foto Pengiriman" class="img-thumbnail" style="max-height: 150px;">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-check-circle me-2"></i>Simpan Perubahan
+                                    </button>
+                                    <a href="/sopir/dashboard/" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

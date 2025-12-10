@@ -1,0 +1,124 @@
+{% extends 'pelanggan/base.html' %}
+{% load humanize %}
+
+{% block title %}Detail Pesanan #{{ pesanan.idPemesanan }} - VIQUAM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/home/">Beranda</a></li>
+                <li class="breadcrumb-item"><a href="/riwayat/">Riwayat Pesanan</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detail Pesanan #{{ pesanan.idPemesanan }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-receipt me-2"></i>Detail Pesanan #{{ pesanan.idPemesanan }}</h2>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Detail Produk</h5>
+            </div>
+            <div class="card-body">
+                {% if detail_list %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Produk</th>
+                                    <th>Jumlah</th>
+                                    <th>Harga</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detail in detail_list %}
+                                <tr>
+                                    <td>{{ detail.idProduk.namaProduk }}</td>
+                                    <td>{{ detail.jumlah }} dus</td>
+                                    <td>Rp {{ detail.idProduk.hargaPerDus|intcomma }}</td>
+                                    <td>Rp {{ detail.subTotal|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Tidak ada detail produk untuk pesanan ini.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informasi Pesanan</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>No. Pesanan:</strong> {{ pesanan.idPemesanan }}</p>
+                <p><strong>Tanggal:</strong> {{ pesanan.tanggalPemesanan|date:"d M Y H:i" }}</p>
+                <p><strong>Total:</strong> <span class="text-success">Rp {{ pesanan.total|intcomma }}</span></p>
+                <p><strong>Status:</strong> 
+                    {% if pesanan.status == 'Diproses' %}
+                        <span class="badge bg-warning text-dark">{{ pesanan.status }}</span>
+                    {% elif pesanan.status == 'Dikirim' %}
+                        <span class="badge bg-primary">{{ pesanan.status }}</span>
+                    {% elif pesanan.status == 'Selesai' %}
+                        <span class="badge bg-success">{{ pesanan.status }}</span>
+                    {% elif pesanan.status == 'Dibatalkan' %}
+                        <span class="badge bg-danger">{{ pesanan.status }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ pesanan.status }}</span>
+                    {% endif %}
+                </p>
+                
+                <hr>
+                
+                <p><strong>Alamat Pengiriman:</strong></p>
+                <p class="text-muted">{{ pesanan.alamatPengiriman }}</p>
+                
+                {% if pesanan.idSopir %}
+                <hr>
+                <p><strong>Driver:</strong> {{ pesanan.idSopir.nama }}</p>
+                <p><strong>Kontak Driver:</strong> {{ pesanan.idSopir.noHp }}</p>
+                {% endif %}
+                
+                {% if pesanan.buktiBayar %}
+                <hr>
+                <p><strong>Bukti Pembayaran:</strong></p>
+                <a href="{{ pesanan.buktiBayar.url }}" target="_blank">
+                    <img src="{{ pesanan.buktiBayar.url }}" alt="Bukti Pembayaran" class="img-fluid rounded" style="max-height: 200px;">
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <a href="/riwayat/" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Kembali ke Riwayat
+        </a>
+    </div>
+</div>
+{% endblock %}

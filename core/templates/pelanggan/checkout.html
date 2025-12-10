@@ -1,0 +1,197 @@
+{% extends 'pelanggan/base.html' %}
+{% load humanize %}
+
+{% block title %}Checkout - VIQUAM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-check-circle me-2"></i>Checkout Pesanan</h2>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if cart_items %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Informasi Pembayaran</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Nama Bank:</strong> Bank Mandiri Cab Urip Kupang</p>
+                            <p><strong>Atas Nama:</strong> PT Tabun Tirta Mathonis</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Nomor Rekening:</strong> 
+                                <span id="rekening">1610001874879</span>
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="copyRekening()">
+                                    <i class="fas fa-copy me-1"></i>Salin
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Perhatian!</strong> Harap melakukan pembayaran sebelum memesan. Setelah transfer, unggah bukti pembayaran di bawah ini.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informasi Pengiriman</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" action="/checkout/">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.alamatPengiriman.id_for_label }}" class="form-label">Alamat Pengiriman</label>
+                            {{ form.alamatPengiriman }}
+                            {% if form.alamatPengiriman.errors %}
+                                <div class="text-danger">
+                                    {{ form.alamatPengiriman.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.buktiBayar.id_for_label }}" class="form-label">Bukti Pembayaran <span class="text-danger">*</span></label>
+                            {{ form.buktiBayar }}
+                            <div class="form-text">Upload bukti pembayaran. Format yang diterima: JPG, PNG, PDF (Max 5MB)</div>
+                            {% if form.buktiBayar.errors %}
+                                <div class="text-danger">
+                                    {{ form.buktiBayar.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-check-circle me-2"></i>Konfirmasi Pesanan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Ringkasan Pesanan</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for item in cart_items %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <div>
+                                <h6 class="my-0">{{ item.nama }}</h6>
+                                <small class="text-muted">{{ item.quantity }} x Rp {{ item.harga|intcomma }}</small>
+                            </div>
+                            <span class="text-muted">Rp {{ item.subtotal|intcomma }}</span>
+                        </li>
+                        {% endfor %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Total</span>
+                            <strong>Rp {{ total_price|intcomma }}</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>Keranjang belanja Anda kosong. Tidak dapat melakukan checkout.
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="/produk/" class="btn btn-primary">
+                    <i class="fas fa-box-open me-2"></i>Lihat Produk
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Hidden textarea for copy fallback -->
+<textarea id="hidden-textarea" style="position: fixed; left: -9999px; top: -9999px;"></textarea>
+
+<script>
+function copyRekening() {
+    const rekeningText = document.getElementById('rekening').innerText;
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(rekeningText).then(() => {
+            showNotification('Berhasil!', 'Nomor rekening telah disalin ke clipboard.', 'success');
+        }).catch(err => {
+            console.error('Failed to copy with Clipboard API: ', err);
+            // Fallback to execCommand
+            fallbackCopyTextToClipboard(rekeningText);
+        });
+    } else {
+        // Fallback to execCommand
+        fallbackCopyTextToClipboard(rekeningText);
+    }
+}
+
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.getElementById('hidden-textarea');
+    textArea.value = text;
+    
+    // Select text
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        // Execute copy command
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showNotification('Berhasil!', 'Nomor rekening telah disalin ke clipboard.', 'success');
+        } else {
+            showNotification('Gagal', 'Gagal menyalin nomor rekening. Silakan salin secara manual.', 'danger');
+        }
+    } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+        showNotification('Gagal', 'Gagal menyalin nomor rekening. Silakan salin secara manual.', 'danger');
+    }
+}
+
+function showNotification(title, message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <strong>${title}</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'pelanggan/base.html' %}
+{% load humanize %}
+
+{% block title %}Riwayat Pesanan - VIQUAM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-history me-2"></i>Riwayat Pesanan</h2>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if pesanan_list %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>No. Pesanan</th>
+                                    <th>Tanggal</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pesanan in pesanan_list %}
+                                <tr>
+                                    <td>{{ pesanan.idPemesanan }}</td>
+                                    <td>{{ pesanan.tanggalPemesanan|date:"d M Y H:i" }}</td>
+                                    <td>Rp {{ pesanan.total|intcomma }}</td>
+                                    <td>
+                                        {% if pesanan.status == 'Diproses' %}
+                                            <span class="badge bg-warning text-dark">{{ pesanan.status }}</span>
+                                        {% elif pesanan.status == 'Dikirim' %}
+                                            <span class="badge bg-primary">{{ pesanan.status }}</span>
+                                        {% elif pesanan.status == 'Selesai' %}
+                                            <span class="badge bg-success">{{ pesanan.status }}</span>
+                                        {% elif pesanan.status == 'Dibatalkan' %}
+                                            <span class="badge bg-danger">{{ pesanan.status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ pesanan.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="/riwayat/{{ pesanan.idPemesanan }}/detail/" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-eye"></i> Detail
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>Anda belum memiliki riwayat pesanan.
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="/produk/" class="btn btn-primary">
+                    <i class="fas fa-box-open me-2"></i>Mulai Belanja
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

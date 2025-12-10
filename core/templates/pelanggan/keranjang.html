@@ -1,0 +1,98 @@
+{% extends 'pelanggan/base.html' %}
+{% load humanize %}
+
+{% block title %}Keranjang Belanja - VIQUAM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-shopping-cart me-2"></i>Keranjang Belanja</h2>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if cart_items %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Produk</th>
+                                    <th>Harga</th>
+                                    <th>Jumlah</th>
+                                    <th>Subtotal</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in cart_items %}
+                                <tr>
+                                    <td>{{ item.nama }}</td>
+                                    <td>Rp {{ item.harga|intcomma }}</td>
+                                    <td>
+                                        <form method="post" action="/keranjang/update/{{ item.id }}/" class="d-inline">
+                                            {% csrf_token %}
+                                            <div class="input-group" style="width: 120px;">
+                                                <input type="number" class="form-control form-control-sm" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.stok }}" required>
+                                                <button class="btn btn-outline-primary btn-sm" type="submit">Update</button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                    <td>Rp {{ item.subtotal|intcomma }}</td>
+                                    <td>
+                                        <a href="/keranjang/remove/{{ item.id }}/" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus {{ item.nama }} dari keranjang?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3" class="text-end">Total:</th>
+                                    <th>Rp {{ total_price|intcomma }}</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="/produk/" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Lanjutkan Belanja
+                        </a>
+                        <a href="/checkout/" class="btn btn-primary">
+                            <i class="fas fa-check-circle me-2"></i>Checkout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>Keranjang belanja Anda kosong.
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="/produk/" class="btn btn-primary">
+                    <i class="fas fa-box-open me-2"></i>Lihat Produk
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

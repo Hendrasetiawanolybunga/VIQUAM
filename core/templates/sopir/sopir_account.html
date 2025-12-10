@@ -1,0 +1,82 @@
+{% extends 'sopir/base.html' %}
+{% load humanize %}
+
+{% block title %}Akun Sopir - VIQUAM{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <p class="text-dark text-center">Informasi akun dan kendaraan Anda</p>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <div class="row">
+                <!-- Sopir Info Card -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-user me-2"></i>Informasi Sopir</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="col-sm-4"><strong>Nama:</strong></div>
+                                <div class="col-sm-8">{{ sopir.nama }}</div>
+                            </div>
+                            <hr>
+                            <div class="row mb-2">
+                                <div class="col-sm-4"><strong>Username:</strong></div>
+                                <div class="col-sm-8">{{ sopir.username }}</div>
+                            </div>
+                            <hr>
+                            <div class="row mb-2">
+                                <div class="col-sm-4"><strong>No. HP:</strong></div>
+                                <div class="col-sm-8">{{ sopir.noHp }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kendaraan Info Cards -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Kendaraan Ditugaskan</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if kendaraan_list %}
+                                {% for kendaraan in kendaraan_list %}
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4"><strong>Nomor Plat:</strong></div>
+                                        <div class="col-sm-8">{{ kendaraan.nomorPlat }}</div>
+                                    </div>
+                                    <hr>
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4"><strong>Nama:</strong></div>
+                                        <div class="col-sm-8">{{ kendaraan.nama }}</div>
+                                    </div>
+                                    <hr>
+                                    <div class="row mb-2">
+                                        <div class="col-sm-4"><strong>Jenis:</strong></div>
+                                        <div class="col-sm-8">{{ kendaraan.jenis }}</div>
+                                    </div>
+                                    {% if not forloop.last %}<hr class="my-4">{% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">Tidak ada kendaraan yang ditugaskan.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

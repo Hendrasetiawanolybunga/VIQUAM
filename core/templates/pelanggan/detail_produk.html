@@ -1,0 +1,86 @@
+{% extends 'pelanggan/base.html' %}
+{% load humanize %}
+
+{% block title %}{{ produk.namaProduk }} - VIQUAM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/home/">Beranda</a></li>
+                <li class="breadcrumb-item"><a href="/produk/">Produk</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ produk.namaProduk }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-info-circle me-2"></i>Detail Produk</h2>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                {% if produk.foto %}
+                    <img src="{{ produk.foto.url }}" alt="{{ produk.namaProduk }}" class="img-fluid rounded" onerror="this.src='https://placehold.co/400x400/0b1d28/FFFFFF?text={{ produk.namaProduk|urlencode }}';">
+                {% else %}
+                    <img src="https://placehold.co/400x400/0b1d28/FFFFFF?text={{ produk.namaProduk|urlencode }}" alt="{{ produk.namaProduk }}" class="img-fluid rounded">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">{{ produk.namaProduk }}</h3>
+                <p class="card-text">{{ produk.deskripsi }}</p>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <p><strong>Harga per Dus:</strong></p>
+                        <h4 class="text-success">Rp {{ produk.hargaPerDus|intcomma }}</h4>
+                    </div>
+                    <div class="col-6">
+                        <p><strong>Stok Tersedia:</strong></p>
+                        <h4 class="text-primary">{{ produk.stok }} dus</h4>
+                    </div>
+                </div>
+                
+                <form method="post" action="/keranjang/add/{{ produk.idProduk }}/">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Jumlah (dus):</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1" max="{{ produk.stok }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-shopping-cart me-2"></i>Tambah ke Keranjang
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <a href="/produk/" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Kembali ke Daftar Produk
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -6,11 +6,23 @@ from django.db.models import F, Sum
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.shortcuts import redirect
 from django.utils.safestring import mark_safe
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.models import User, Group
 from .models import (
     Pelanggan, Sopir, Kendaraan, Produk,
     StokMasuk, Pemesanan, DetailPemesanan, Feedback
 )
 from . import views
+
+# Custom Admin Site
+class CustomAdminSite(admin.AdminSite):
+    site_header = 'Viquam Administration'
+    site_title = 'Viquam Admin'
+    index_title = 'Dashboard'
+    index_template = 'core/dashboard.html'
+
+# Instantiate the custom admin site
+custom_admin_site = CustomAdminSite(name='custom_admin')
 
 try:
     locale.setlocale(locale.LC_ALL, 'id_ID.UTF-8')
@@ -40,18 +52,26 @@ class ActionColumnMixin:
     actions_column.allow_tags = True
     
 
-@admin.register(Pelanggan)
+# Register built-in Django models with custom admin site
+admin.site.unregister(User)
+admin.site.unregister(Group)
+
+custom_admin_site.register(User)
+custom_admin_site.register(Group)
+
+@admin.register(Pelanggan, site=custom_admin_site)
 class PelangganAdmin(ActionColumnMixin, admin.ModelAdmin):
-    list_display = ('nama', 'noWa', 'alamat', 'username', 'actions_column') 
-    search_fields = ('nama', 'noWa', 'username')
+    list_display = ('nama', 'noWa', 'alamat', 'username', 'actions_column')
+    search_fields = ('nama', 'username', 'noWa')
     list_filter = ()
 
-@admin.register(Sopir)
+@admin.register(Sopir, site=custom_admin_site)
 class SopirAdmin(ActionColumnMixin, admin.ModelAdmin):
     list_display = ('nama', 'noHp', 'username', 'actions_column')
-    search_fields = ('nama', 'noHp')
+    search_fields = ('nama', 'username', 'noHp')
 
-@admin.register(Kendaraan)
+
+@admin.register(Kendaraan, site=custom_admin_site)
 class KendaraanAdmin(ActionColumnMixin, admin.ModelAdmin):
     list_display = ('nomorPlat', 'nama', 'jenis', 'idSopir', 'actions_column')
     list_filter = ('jenis',)
@@ -59,7 +79,7 @@ class KendaraanAdmin(ActionColumnMixin, admin.ModelAdmin):
     autocomplete_fields = ['idSopir']
 
 
-@admin.register(Produk)
+@admin.register(Produk, site=custom_admin_site)
 class ProdukAdmin(ActionColumnMixin, admin.ModelAdmin):
     # Mengubah list_display agar hargaPerDus (field asli) muncul, 
     # sehingga list_editable dapat berfungsi.
@@ -68,7 +88,8 @@ class ProdukAdmin(ActionColumnMixin, admin.ModelAdmin):
     list_editable = ('hargaPerDus',) 
     readonly_fields = () 
 
-@admin.register(StokMasuk)
+
+@admin.register(StokMasuk, site=custom_admin_site)
 class StokMasukAdmin(ActionColumnMixin, admin.ModelAdmin):
     list_display = ('idProduk', 'jumlah', 'tanggal', 'keterangan', 'actions_column')
     list_filter = ('tanggal', 'idProduk')
@@ -90,7 +111,16 @@ class DetailPemesananInline(admin.TabularInline):
     verbose_name = 'Detail Produk'
     verbose_name_plural = 'Detail Produk'
 
-@admin.register(Pemesanan)
+
+@admin.register(DetailPemesanan, site=custom_admin_site)
+class DetailPemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
+    list_display = ('idPemesanan', 'idProduk', 'jumlah', 'subTotal', 'actions_column')
+    list_filter = ('idPemesanan', 'idProduk')
+    search_fields = ('idPemesanan__idPelanggan__nama', 'idProduk__namaProduk')
+    autocomplete_fields = ['idPemesanan', 'idProduk']
+
+
+@admin.register(Pemesanan, site=custom_admin_site)
 class PemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
     def total_formatted(self, obj):
         return currency_format(obj.total)
@@ -104,7 +134,7 @@ class PemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
     readonly_fields = ('total', 'tanggalPemesanan') 
     
     inlines = [DetailPemesananInline]
-    
+
     autocomplete_fields = ['idPelanggan', 'idSopir'] 
     
     fieldsets = (
@@ -133,7 +163,8 @@ class PemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-@admin.register(Feedback)
+
+@admin.register(Feedback, site=custom_admin_site)
 class FeedbackAdmin(ActionColumnMixin, admin.ModelAdmin):
     list_display = ('idPelanggan', 'tanggal', 'isi_preview', 'actions_column')
     search_fields = ('idPelanggan__nama', 'isi')
@@ -145,3 +176,4 @@ class FeedbackAdmin(ActionColumnMixin, admin.ModelAdmin):
     def isi_preview(self, obj):
         return f'{obj.isi[:50]}...' if len(obj.isi) > 50 else obj.isi
     isi_preview.short_description = 'Isi Feedback (Ringkasan)'
+

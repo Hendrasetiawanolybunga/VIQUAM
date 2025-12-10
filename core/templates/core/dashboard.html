@@ -1,0 +1,248 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% trans 'Dashboard' %}{% endblock %}
+
+{% block extrahead %}
+    <style>
+        .dashboard-header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .dashboard-header h1, .dashboard-header p {
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard-header .logo {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        /* Menggunakan kelas shadow-lg untuk efek bayangan yang lebih jelas */
+        .card.shadow-lg {
+            box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+    <div class="container-fluid">
+        <div class="row dashboard-header rounded shadow-sm">
+            <div class="col-6">
+                <h1>Dashboard Monitoring</h1>
+            </div>
+            <div class="col-6 text-right">
+                <p class="logo">VIQUAM</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+                <a href="{% url 'admin:core_pemesanan_changelist' %}?status__in=Diproses,Dikirim&tanggalPemesanan__lte={{ twenty_four_hours_ago }}" class="text-decoration-none">
+                    <div class="card bg-danger text-white h-100 shadow-lg">
+                        <div class="card-body">
+                            <h5 class="card-title">Pesanan Perlu Perhatian</h5>
+                            <h2 class="mb-0">{{ pesanan_perlu_perhatian|intcomma }}</h2>
+                            <p class="mb-0">Pesanan > 24 Jam</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+                <a href="{% url 'admin:core_pemesanan_changelist' %}?status__exact=Diproses" class="text-decoration-none">
+                    <div class="card bg-warning text-white h-100 shadow-lg">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Pesanan Diproses</h5>
+                            <h2 class="mb-0">{{ total_pesanan_diproses|intcomma }}</h2>
+                            <p class="mb-0">Menunggu Pengiriman</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+                <a href="{% url 'admin:core_pemesanan_changelist' %}?status__exact=Dikirim" class="text-decoration-none">
+                    <div class="card bg-info text-white h-100 shadow-lg">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Pengiriman Aktif</h5>
+                            <h2 class="mb-0">{{ total_pengiriman_aktif|intcomma }}</h2>
+                            <p class="mb-0">Dalam Perjalanan</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+                <a href="{% url 'admin:core_produk_changelist' %}?stok__lte=10" class="text-decoration-none">
+                    <div class="card bg-dark text-white h-100 shadow-lg">
+                        <div class="card-body">
+                            <h5 class="card-title">Produk Stok Menipis</h5>
+                            <h2 class="mb-0">{{ produk_stok_menipis|intcomma }}</h2>
+                            <p class="mb-0">Stok &le; 10</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="card shadow-lg h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Tren Pendapatan 6 Bulan Terakhir</h5>
+                    </div>
+                    <div class="card-body" style="height: 350px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 mb-4">
+                <div class="card bg-success text-white mb-4 shadow-lg">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Pendapatan (Bulan Ini)</h5>
+                        <h2 class="mb-0">Rp {{ pendapatan_bulan_ini|floatformat:0|intcomma }}</h2>
+                        <p class="mb-0">{{ transaksi_selesai_bulan_ini }} transaksi selesai</p>
+                    </div>
+                </div>
+
+                <div class="card shadow-lg">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Feedback Pelanggan Terbaru</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            {% for feedback in feedback_terbaru %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ feedback.idPelanggan.nama }}</strong>
+                                        <p class="text-muted small mb-0">{{ feedback.isi|truncatechars:50 }}</p>
+                                    </div>
+                                    <span class="badge badge-secondary badge-pill">{{ feedback.tanggal|date:"M d" }}</span>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-center text-muted">Tidak ada feedback saat ini.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="card-footer text-center">
+                        <a href="{% url 'admin:core_feedback_changelist' %}" class="btn btn-sm btn-link">Lihat Semua Feedback</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // PENTING: Ambil data JSON string yang dikirim dari views.py
+            let labelsRaw = {{ chart_labels_json|safe }};
+            let valuesRaw = {{ chart_data_json|safe }};
+
+            console.log('=== DASHBOARD CHART DEBUG INFO ===');
+            console.log('Raw Labels Data (String/Array):', labelsRaw);
+            console.log('Raw Values Data (String/Array):', valuesRaw);
+
+            let labelsData;
+            let valuesData;
+
+            // FUNGSI UTAMA PERBAIKAN: Kode defensif untuk memastikan variabel adalah Array.
+            const parseChartData = (rawData, name) => {
+                let parsed = rawData;
+                
+                // 1. Jika data mentah adalah string (misalnya, '"[1, 2]"' atau '""'), coba parse.
+                if (typeof rawData === 'string') {
+                    try {
+                        parsed = JSON.parse(rawData);
+                    } catch (e) {
+                        console.error(`Error parsing ${name}:`, e);
+                        console.log(`${name} as string:`, rawData);
+                        return []; // Return empty array on parse error
+                    }
+                }
+                
+                // 2. Jika hasilnya bukan array, kembalikan array kosong
+                if (!Array.isArray(parsed)) {
+                    console.warn(`${name} is not an array, returning empty array`);
+                    return [];
+                }
+                
+                return parsed;
+            };
+
+            // Parse both data sets
+            labelsData = parseChartData(labelsRaw, 'Labels');
+            valuesData = parseChartData(valuesRaw, 'Values');
+
+            console.log('Parsed Labels Data:', labelsData);
+            console.log('Parsed Values Data:', valuesData);
+
+            // Validasi tambahan: pastikan panjang array sama
+            if (labelsData.length !== valuesData.length) {
+                console.error('Length mismatch between labels and values:', labelsData.length, 'vs', valuesData.length);
+                // Gunakan panjang minimum untuk mencegah error
+                const minLength = Math.min(labelsData.length, valuesData.length);
+                labelsData = labelsData.slice(0, minLength);
+                valuesData = valuesData.slice(0, minLength);
+            }
+
+            // Buat chart hanya jika ada data
+            if (labelsData.length > 0 && valuesData.length > 0) {
+                try {
+                    const ctx = document.getElementById('revenueChart').getContext('2d');
+                    const chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labelsData,
+                            datasets: [{
+                                label: 'Pendapatan (Rp)',
+                                data: valuesData,
+                                borderColor: 'rgb(75, 192, 192)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                tension: 0.1,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            // Format as currency
+                                            return 'Rp ' + Number(value).toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    console.log('Chart created successfully');
+                } catch (chartError) {
+                    console.error('Error creating chart:', chartError);
+                }
+            } else {
+                console.warn('Insufficient data to create chart');
+                // Tampilkan pesan di tempat chart jika diinginkan
+                const chartContainer = document.getElementById('revenueChart');
+                if (chartContainer) {
+                    chartContainer.parentNode.innerHTML = '<p class="text-center text-muted">Data tidak tersedia untuk ditampilkan</p>';
+                }
+            }
+        });
+    </script>
+{% endblock %}

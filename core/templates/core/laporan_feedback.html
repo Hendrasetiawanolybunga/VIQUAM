@@ -2,12 +2,21 @@
 
 {% block title %}Laporan Feedback Pelanggan{% endblock %}
 
-{% block breadcrumbs %}
-<div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">Home</a>
-&rsaquo; <a href="{% url 'admin:app_list' app_label='core' %}">Core</a>
-&rsaquo; Laporan Feedback Pelanggan
-</div>
+
+
+{% block extrahead %}
+<style>
+    .module {
+        max-width: 100% !important; 
+        width: 100% !important;
+        /* Tambahkan margin atau padding sesuai kebutuhan admin base */
+    }
+    /* Menghilangkan padding horizontal pada elemen .content-main jika ada (ini seringkali ada di template Jazzmin) */
+    #content-main {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+</style>
 {% endblock %}
 
 {% block content %}

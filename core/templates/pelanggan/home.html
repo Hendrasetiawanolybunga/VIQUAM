@@ -1,0 +1,177 @@
+{% extends 'pelanggan/base.html' %}
+
+{% block title %}Beranda - VIQUAM{% endblock %}
+
+{% block content %}
+<style>
+/* Hero Section Mobile Scaling */
+@media (max-width: 576px) {
+    .hero-section {
+        height: 300px !important;
+    }
+    
+    .hero-section h1 {
+        font-size: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .hero-section p {
+        font-size: 1rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .hero-section .btn {
+        font-size: 0.9rem !important;
+        padding: 0.5rem 1rem !important;
+    }
+}
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <!-- Hero Section with Background Image -->
+        <div class="hero-section mb-5" style="position: relative; height: 500px; overflow: hidden; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <!-- Background Image -->
+            <div style="background: url('/static/img/hero-bg.jpg') center/cover no-repeat; position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                <!-- Overlay -->
+                <div style="background: rgba(0, 0, 0, 0.4); position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+            </div>
+            
+            <!-- Content -->
+            <div class="container h-100 d-flex align-items-center justify-content-center text-center" style="position: relative; z-index: 2;">
+                <div class="text-white">
+                    <h1 class="display-4 fw-bold mb-3">Kesegaran Alam Tersembunyi, Air Murni dari Kedalaman Tanah Kupang</h1>
+                    <p class="lead fs-4 mb-4">Pesan sekarang dan rasakan kemurnian yang terjaga</p>
+                    <a href="/produk/" class="btn btn-light btn-lg px-4 py-2 fw-bold">
+                        <i class="fas fa-box-open me-2"></i>Pesan Sekarang
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-4"><i class="fas fa-building me-2"></i>Tentang VIQUAM</h3>
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p>PT Viquam adalah perusahaan air minum dalam kemasan yang telah beroperasi sejak tahun 1987 di Kota Kupang, Nusa Tenggara Timur. Perusahaan ini memproduksi berbagai varian kemasan air minum yang didistribusikan ke wilayah Kota Kupang dan beberapa daerah lain di NTT, termasuk pulau-pulau lainnya. Dengan rata-rata penjualan harian mencapai 500 sampai 1.000 dus dari berbagai varian kemasan. Produk yang dihasilkan meliputi beberapa varian kemasan, yaitu gelas 240 ml, botol 330 ml, botol 600 ml, botol 1500 ml, serta galon 19 liter.</p>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <img src="/static/img/about.jpeg" alt="Tentang VIQUAM" class="img-fluid rounded" onerror="this.src='https://placehold.co/400x250/0b1d28/FFFFFF?text=Placeholder+Image';">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-4"><i class="fas fa-phone-alt me-2"></i>Kontak Kami</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><i class="fas fa-map-marker-alt me-2"></i><strong>Alamat:</strong> Jl. Veteran No. 123, Kota Kupang, NTT</p>
+                        <p>
+                            <i class="fab fa-whatsapp me-2"></i>
+                            <strong>WhatsApp:</strong> 
+                            <a href="https://wa.me/6281234567890" target="_blank" class="text-decoration-none">
+                                +62 812 3456 7890 <i class="fab fa-whatsapp text-success"></i>
+                            </a>
+                        </p>
+                        <p><i class="fas fa-envelope me-2"></i><strong>Email:</strong> info@viquam.com</p>
+                        <p><i class="fas fa-clock me-2"></i><strong>Jam Operasional:</strong> Senin - Sabtu, 08:00 - 17:00 WITA</p>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="ratio ratio-16x9">
+                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.44725218501!2d123.888888!3d-10.175888!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2c569d7b7e7e7e7e%3A0x7e7e7e7e7e7e7e7e!2sKota%20Kupang%2C%20Nusa%20Tenggara%20Tim.!5e0!3m2!1sen!2sid!4v1234567890123!5m2!1sen!2sid" 
+                                    allowfullscreen="" 
+                                    loading="lazy" 
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                    title="Lokasi VIQUAM">
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-4"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h3>
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                <strong>Apa keunggulan air mineral VIQUAM?</strong>
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Air mineral VIQUAM berasal dari mata air alami di kedalaman tanah Kota Kupang yang kaya akan mineral alami. Proses filtrasi dan sterilisasi yang ketat memastikan kualitas air tetap terjaga dan aman untuk dikonsumsi sehari-hari.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                <strong>Bagaimana proses pengiriman dilakukan?</strong>
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Kami memiliki armada distribusi yang handal dengan tim sopir profesional. Pengiriman dilakukan setiap hari kerja dengan estimasi waktu pengiriman 1-2 hari kerja tergantung lokasi. Untuk area tertentu di luar Kota Kupang, waktu pengiriman bisa memakan waktu 2-3 hari kerja.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                <strong>Bagaimana cara memesan produk VIQUAM?</strong>
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Anda dapat memesan produk VIQUAM dengan mudah melalui website kami. Cukup daftar sebagai pelanggan, pilih produk yang diinginkan, tambahkan ke keranjang, lakukan checkout, dan unggah bukti pembayaran. Pesanan Anda akan diproses dan dikirimkan sesuai jadwal distribusi.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingFour">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            <strong>Apakah tersedia layanan COD (Cash on Delivery)?</strong>
+                        </button>
+                    </h2>
+                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Untuk kenyamanan dan keamanan transaksi, kami mewajibkan pembayaran terlebih dahulu sebelum pengiriman. Namun, Anda bisa membayar ongkos kirim saat barang diterima (COD untuk ongkos kirim saja). Pembayaran utama untuk produk harus dilakukan sebelumnya melalui transfer bank.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingFive">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                            <strong>Berapa lama masa simpan produk VIQUAM?</strong>
+                        </button>
+                    </h2>
+                    <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Produk VIQUAM memiliki masa simpan yang optimal selama 1 tahun dari tanggal produksi jika disimpan di tempat yang sejuk dan terhindar dari sinar matahari langsung. Untuk galon, sebaiknya digunakan dalam waktu 2-3 hari setelah dibuka dan disimpan di tempat bersih.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

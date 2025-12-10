@@ -119,6 +119,7 @@ import os
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -175,35 +176,35 @@ JAZZMIN_SETTINGS = {
         
         # Laporan Pelanggan (Menggunakan URL Preview HTML)
         {
-            'name': 'Laporan Pelanggan',
+            'name': 'L. Pelanggan',
             'url': 'admin:laporan-pelanggan',
             'icon': 'fas fa-users'
         },
         
         # Laporan Produk & Stok
         {
-            'name': 'Laporan Produk & Stok',
+            'name': 'L. Produk & Stok',
             'url': 'admin:laporan-produk',
             'icon': 'fas fa-box-open'
         },
         
         # Laporan Sopir & Kendaraan
         {
-            'name': 'Laporan Sopir & Kendaraan',
+            'name': 'L. Sopir & Kendaraan',
             'url': 'admin:laporan-sopir-kendaraan',
             'icon': 'fas fa-truck-moving'
         },
         
         # Laporan Pemesanan & Pendapatan
         {
-            'name': 'Laporan Pemesanan & Pendapatan',
+            'name': 'L. Pemesanan & Pendapatan',
             'url': 'admin:laporan-pemesanan-pendapatan',
             'icon': 'fas fa-money-bill-wave'
         },
         
         # Laporan Feedback
         {
-            'name': 'Laporan Feedback',
+            'name': 'L. Feedback',
             'url': 'admin:laporan-feedback',
             'icon': 'fas fa-comments'
         },

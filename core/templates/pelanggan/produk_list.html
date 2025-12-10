@@ -1,0 +1,107 @@
+{% extends 'pelanggan/base.html' %}
+{% load humanize %}
+
+{% block title %}Daftar Produk - VIQUAM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-box-open me-2"></i>Daftar Produk</h2>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if produk_list %}
+    <div class="row">
+        {% for produk in produk_list %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card product-card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ produk.namaProduk }}</h5>
+                    <p class="card-text flex-grow-1">{{ produk.deskripsi }}</p>
+                    <div class="mt-auto">
+                        <p class="card-text"><strong>Harga:</strong> Rp {{ produk.hargaPerDus|intcomma }}</p>
+                        <p class="card-text"><strong>Stok:</strong> {{ produk.stok }} dus</p>
+                        <a href="/produk/{{ produk.idProduk }}/detail/" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-info-circle me-1"></i>Detail Produk
+                        </a>
+                        <form method="post" action="/keranjang/add/{{ produk.idProduk }}/" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-shopping-cart me-1"></i>Tambah ke Keranjang
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if produk_list.has_other_pages %}
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if produk_list.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ produk_list.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in produk_list.paginator.page_range %}
+                        {% if produk_list.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > produk_list.number|add:'-3' and num < produk_list.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if produk_list.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ produk_list.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ produk_list.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+{% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>Tidak ada produk yang tersedia saat ini.
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

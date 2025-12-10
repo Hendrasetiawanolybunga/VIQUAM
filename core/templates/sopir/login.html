@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Sopir - VIQUAM</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Poppins Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --viquam-dark: #0b1d28;
+            --viquam-white: #FFFFFF;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            background-color: var(--viquam-white);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .login-card {
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background-color: var(--viquam-white);
+        }
+        
+        .login-header {
+            background-color: var(--viquam-dark);
+            color: var(--viquam-white);
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .login-body {
+            padding: 30px;
+        }
+        
+        .form-control {
+            border-radius: 5px;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            background-color: var(--viquam-white);
+            color: var(--viquam-dark);
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .btn-login {
+            background-color: var(--viquam-dark);
+            color: var(--viquam-white);
+            border: 1px solid var(--viquam-dark);
+            border-radius: 5px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .btn-login:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(11, 29, 40, 0.3);
+        }
+        
+        .password-toggle {
+            cursor: pointer;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--viquam-dark);
+        }
+        
+        .password-container {
+            position: relative;
+        }
+        
+        .alert {
+            color: var(--viquam-dark);
+        }
+        
+        /* Mobile Scaling */
+        @media (max-width: 576px) {
+            body {
+                font-size: 0.8rem;
+                padding: 10px;
+            }
+            
+            .fa, i.fas, i.far, i.fal, i.fab {
+                font-size: 0.9rem;
+            }
+            
+            .login-card {
+                border-radius: 8px;
+            }
+            
+            .login-header {
+                padding: 20px 15px;
+            }
+            
+            .login-body {
+                padding: 20px 15px;
+            }
+            
+            .form-control {
+                padding: 10px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .btn-login {
+                padding: 10px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="login-card">
+                    <div class="login-header">
+                        <h3><i class="fas fa-truck-moving me-2"></i>VIQUAM Sopir</h3>
+                        <p class="mb-0">Login ke Dashboard Sopir</p>
+                    </div>
+                    <div class="login-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        <form method="post" action="/sopir/login/">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label for="username" class="form-label fw-bold">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-dark"><i class="fas fa-user text-dark"></i></span>
+                                    <input type="text" class="form-control border-dark" id="username" name="username" placeholder="Masukkan username" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label fw-bold">Password</label>
+                                <div class="password-container">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-dark"><i class="fas fa-lock text-dark"></i></span>
+                                        <input type="password" class="form-control border-dark" id="password" name="password" placeholder="Masukkan password" required>
+                                    </div>
+                                    <span class="password-toggle" id="togglePassword">
+                                        <i class="fas fa-eye"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-login">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Password Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const togglePassword = document.querySelector('#togglePassword');
+            const password = document.querySelector('#password');
+            
+            togglePassword.addEventListener('click', function() {
+                // Toggle the type attribute
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                // Toggle the eye icon
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        });
+    </script>
+</body>
+</html>
