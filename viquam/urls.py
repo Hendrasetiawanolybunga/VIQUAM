@@ -1,13 +1,14 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.conf import settings
 # Impor fungsi static
 from django.conf.urls.static import static 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Tambahkan path lain di sini
+    path('core/', include('core.urls')),
 ]
+
 # --- Konfigurasi File Media (Hanya digunakan saat DEBUG=True) ---
 # Menambahkan konfigurasi untuk melayani file media saat mode debug aktif
 if settings.DEBUG:

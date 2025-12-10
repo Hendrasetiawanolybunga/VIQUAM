@@ -1,0 +1,143 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Laporan Feedback Pelanggan{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Home</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='core' %}">Core</a>
+&rsaquo; Laporan Feedback Pelanggan
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>Laporan Feedback Pelanggan</h1>
+    
+    <form method="get" id="filter-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_tgl_mulai">Tanggal Mulai:</label>
+                <input type="date" name="tgl_mulai" id="id_tgl_mulai" value="{{ tgl_mulai }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_tgl_akhir">Tanggal Akhir:</label>
+                <input type="date" name="tgl_akhir" id="id_tgl_akhir" value="{{ tgl_akhir }}">
+            </div>
+            
+            <div class="form-group">
+                <input type="submit" value="Filter Data" class="default">
+            </div>
+        </div>
+    </form>
+    
+    <div class="module">
+        <table id="result_list">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Tanggal</th>
+                    <th>Pelanggan</th>
+                    <th>Feedback</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for feedback in feedback_list %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ feedback.tanggal|date:"d/m/Y" }}</td>
+                    <td>{{ feedback.idPelanggan.nama }}</td>
+                    <td>{{ feedback.isi }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">Tidak ada data feedback</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="module footer">
+        <a href="{% url 'admin:laporan-feedback-pdf' %}?{{ request.GET.urlencode }}" class="btn btn-primary" target="_blank">
+            <i class="fas fa-file-pdf"></i> Cetak PDF
+        </a>
+    </div>
+</div>
+
+<style>
+.form-row {
+    display: flex;
+    gap: 15px;
+    align-items: end;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-group input[type="date"] {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.form-group input[type="submit"] {
+    height: fit-content;
+    align-self: flex-end;
+}
+
+#result_list {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#result_list th,
+#result_list td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+#result_list th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.footer {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+.btn-primary {
+    background-color: #dc3545;
+}
+
+.btn-primary:hover {
+    background-color: #c82333;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Laporan Produk & Stok{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Home</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='core' %}">Core</a>
+&rsaquo; Laporan Produk & Stok
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>Laporan Produk & Stok</h1>
+    
+    <form method="get" id="filter-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_tgl_mulai">Tanggal Mulai:</label>
+                <input type="date" name="tgl_mulai" id="id_tgl_mulai" value="{{ tgl_mulai }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_tgl_akhir">Tanggal Akhir:</label>
+                <input type="date" name="tgl_akhir" id="id_tgl_akhir" value="{{ tgl_akhir }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_filter_tipe">Filter Tipe:</label>
+                <select name="filter_tipe" id="id_filter_tipe">
+                    <option value="">-- Pilih Filter --</option>
+                    <option value="terlaris" {% if filter_tipe == 'terlaris' %}selected{% endif %}>Terlaris</option>
+                    <option value="stok_menipis" {% if filter_tipe == 'stok_menipis' %}selected{% endif %}>Stok Menipis</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_batas_stok">Batas Stok (untuk filter stok menipis):</label>
+                <input type="number" name="batas_stok" id="id_batas_stok" value="{{ batas_stok|default:10 }}">
+            </div>
+            
+            <div class="form-group">
+                <input type="submit" value="Filter Data" class="default">
+            </div>
+        </div>
+    </form>
+    
+    <div class="module">
+        <table id="result_list">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama Produk</th>
+                    <th>Ukuran</th>
+                    <th>Harga</th>
+                    <th>Stok</th>
+                    <th>Terjual</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produk in produk_list %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ produk.namaProduk }}</td>
+                    <td>{{ produk.ukuranKemasan }}</td>
+                    <td>{{ produk.hargaPerDus }}</td>
+                    <td>{{ produk.stok }}</td>
+                    <td>{{ produk.total_terjual|default:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">Tidak ada data produk</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="module footer">
+        <a href="{% url 'admin:laporan-produk-pdf' %}?{{ request.GET.urlencode }}" class="btn btn-primary" target="_blank">
+            <i class="fas fa-file-pdf"></i> Cetak PDF
+        </a>
+    </div>
+</div>
+
+<style>
+.form-row {
+    display: flex;
+    gap: 15px;
+    align-items: end;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-group input[type="date"],
+.form-group input[type="number"],
+.form-group select {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.form-group input[type="submit"] {
+    height: fit-content;
+    align-self: flex-end;
+}
+
+#result_list {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#result_list th,
+#result_list td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+#result_list th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.footer {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+.btn-primary {
+    background-color: #dc3545;
+}
+
+.btn-primary:hover {
+    background-color: #c82333;
+}
+</style>
+{% endblock %}

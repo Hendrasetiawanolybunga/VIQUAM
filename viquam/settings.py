@@ -57,7 +57,9 @@ ROOT_URLCONF = 'viquam.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'core' / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -68,7 +70,6 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = 'viquam.wsgi.application'
 
 
@@ -136,8 +137,7 @@ JAZZMIN_SETTINGS = {
     'welcome_sign': 'Selamat Datang',
     'copyright': '2023 Viquam ',
     'footer_text': 'Viquam',
-    
-    
+    'show_ui_builder': True,
     
      "icons": {
         "auth": "fas fa-users-cog",
@@ -154,8 +154,7 @@ JAZZMIN_SETTINGS = {
         "core.StokMasuk": "fas fa-box",
     },
 
-
-     "order_with_respect_to": [
+    "order_with_respect_to": [
         "auth", 
         "core.Pelanggan",
         "core.Produk",
@@ -165,10 +164,51 @@ JAZZMIN_SETTINGS = {
         "core.Pemesanan",
         "core.Feedback",
     ],
-    # "show_ui_builder": True,
-   
-}
 
+    "topmenu_links": [
+        # Tautan ke Dashboard
+        {
+            'name': 'Home',
+            'url': 'admin:index',
+            'icon': 'fa fa-home',
+        },
+        
+        # Laporan Pelanggan (Menggunakan URL Preview HTML)
+        {
+            'name': 'Laporan Pelanggan',
+            'url': 'admin:laporan-pelanggan',
+            'icon': 'fas fa-users'
+        },
+        
+        # Laporan Produk & Stok
+        {
+            'name': 'Laporan Produk & Stok',
+            'url': 'admin:laporan-produk',
+            'icon': 'fas fa-box-open'
+        },
+        
+        # Laporan Sopir & Kendaraan
+        {
+            'name': 'Laporan Sopir & Kendaraan',
+            'url': 'admin:laporan-sopir-kendaraan',
+            'icon': 'fas fa-truck-moving'
+        },
+        
+        # Laporan Pemesanan & Pendapatan
+        {
+            'name': 'Laporan Pemesanan & Pendapatan',
+            'url': 'admin:laporan-pemesanan-pendapatan',
+            'icon': 'fas fa-money-bill-wave'
+        },
+        
+        # Laporan Feedback
+        {
+            'name': 'Laporan Feedback',
+            'url': 'admin:laporan-feedback',
+            'icon': 'fas fa-comments'
+        },
+    ],
+}
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
     "footer_small_text": False,

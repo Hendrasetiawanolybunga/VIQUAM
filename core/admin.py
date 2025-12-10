@@ -1,13 +1,16 @@
 import locale
 from django.contrib import admin
 from django.utils.html import format_html
-from django.urls import reverse
-from django.db.models import F 
+from django.urls import reverse, path
+from django.db.models import F, Sum
 from django.contrib.humanize.templatetags.humanize import intcomma
+from django.shortcuts import redirect
+from django.utils.safestring import mark_safe
 from .models import (
     Pelanggan, Sopir, Kendaraan, Produk,
     StokMasuk, Pemesanan, DetailPemesanan, Feedback
 )
+from . import views
 
 try:
     locale.setlocale(locale.LC_ALL, 'id_ID.UTF-8')
@@ -113,6 +116,22 @@ class PemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('laporan/pelanggan/', self.admin_site.admin_view(views.admin_laporan_pelanggan), name='laporan-pelanggan'),
+            path('laporan/produk/', self.admin_site.admin_view(views.admin_laporan_produk), name='laporan-produk'),
+            path('laporan/sopir-kendaraan/', self.admin_site.admin_view(views.admin_laporan_sopir_kendaraan), name='laporan-sopir-kendaraan'),
+            path('laporan/pemesanan-pendapatan/', self.admin_site.admin_view(views.admin_laporan_pemesanan_pendapatan), name='laporan-pemesanan-pendapatan'),
+            path('laporan/feedback/', self.admin_site.admin_view(views.admin_laporan_feedback), name='laporan-feedback'),
+            path('laporan/pelanggan/pdf/', self.admin_site.admin_view(views.laporan_pelanggan), name='laporan-pelanggan-pdf'),
+            path('laporan/produk/pdf/', self.admin_site.admin_view(views.laporan_produk), name='laporan-produk-pdf'),
+            path('laporan/sopir-kendaraan/pdf/', self.admin_site.admin_view(views.laporan_sopir_kendaraan), name='laporan-sopir-kendaraan-pdf'),
+            path('laporan/pemesanan-pendapatan/pdf/', self.admin_site.admin_view(views.laporan_pemesanan_pendapatan), name='laporan-pemesanan-pendapatan-pdf'),
+            path('laporan/feedback/pdf/', self.admin_site.admin_view(views.laporan_feedback), name='laporan-feedback-pdf'),
+        ]
+        return custom_urls + urls
 
 @admin.register(Feedback)
 class FeedbackAdmin(ActionColumnMixin, admin.ModelAdmin):
