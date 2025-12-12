@@ -6,20 +6,30 @@
 {% block title %}{% trans 'Dashboard' %}{% endblock %}
 
 {% block extrahead %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         .dashboard-header {
-            background-color: #007bff;
+            background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
             padding: 15px;
             margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .dashboard-header h1, .dashboard-header p {
             margin: 0;
             padding: 0;
         }
+        .dashboard-header h1 {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: 0.5px;
+        }
         .dashboard-header .logo {
-            font-weight: bold;
-            font-size: 1.2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
         .card-title {
             font-size: 1.1rem;
@@ -32,25 +42,22 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 {% endblock %}
-
 {% block content %}
-
     <div class="container-fluid">
         <div class="row dashboard-header rounded shadow-sm">
             <div class="col-6">
                 <h1>Dashboard Monitoring</h1>
             </div>
             <div class="col-6 text-right">
-                <p class="logo">VIQUAM</p>
+                <p class="logo">Welcome, {{ user.username }}</p>
             </div>
         </div>
-
         <div class="row">
             <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
-                <a href="{% url 'admin:core_pemesanan_changelist' %}?status__in=Diproses,Dikirim&tanggalPemesanan__lte={{ twenty_four_hours_ago }}" class="text-decoration-none">
+                <a href="{% url 'admin:core_pemesanan_changelist' %}?status__exact=Diproses&tanggalPemesanan__lte={{ twenty_four_hours_ago }}" class="text-decoration-none">
                     <div class="card bg-danger text-white h-100 shadow-lg">
                         <div class="card-body">
-                            <h5 class="card-title">Pesanan Perlu Perhatian</h5>
+                            <h5 class="card-title"><i class="fas fa-exclamation-circle mr-2"></i>Pesanan Perlu Perhatian</h5>
                             <h2 class="mb-0">{{ pesanan_perlu_perhatian|intcomma }}</h2>
                             <p class="mb-0">Pesanan > 24 Jam</p>
                         </div>
@@ -62,7 +69,7 @@
                 <a href="{% url 'admin:core_pemesanan_changelist' %}?status__exact=Diproses" class="text-decoration-none">
                     <div class="card bg-warning text-white h-100 shadow-lg">
                         <div class="card-body">
-                            <h5 class="card-title">Total Pesanan Diproses</h5>
+                            <h5 class="card-title"><i class="fas fa-box mr-2"></i>Total Pesanan Diproses</h5>
                             <h2 class="mb-0">{{ total_pesanan_diproses|intcomma }}</h2>
                             <p class="mb-0">Menunggu Pengiriman</p>
                         </div>
@@ -74,7 +81,7 @@
                 <a href="{% url 'admin:core_pemesanan_changelist' %}?status__exact=Dikirim" class="text-decoration-none">
                     <div class="card bg-info text-white h-100 shadow-lg">
                         <div class="card-body">
-                            <h5 class="card-title">Total Pengiriman Aktif</h5>
+                            <h5 class="card-title"><i class="fas fa-truck mr-2"></i>Total Pengiriman Aktif</h5>
                             <h2 class="mb-0">{{ total_pengiriman_aktif|intcomma }}</h2>
                             <p class="mb-0">Dalam Perjalanan</p>
                         </div>
@@ -86,15 +93,14 @@
                 <a href="{% url 'admin:core_produk_changelist' %}?stok__lte=10" class="text-decoration-none">
                     <div class="card bg-dark text-white h-100 shadow-lg">
                         <div class="card-body">
-                            <h5 class="card-title">Produk Stok Menipis</h5>
+                            <h5 class="card-title"><i class="fas fa-exclamation-triangle mr-2"></i>Produk Stok Menipis</h5>
                             <h2 class="mb-0">{{ produk_stok_menipis|intcomma }}</h2>
                             <p class="mb-0">Stok &le; 10</p>
                         </div>
                     </div>
                 </a>
             </div>
-        </div>
-        
+        </div>        
         <div class="row">
             <div class="col-lg-8 mb-4">
                 <div class="card shadow-lg h-100">
@@ -110,12 +116,11 @@
             <div class="col-lg-4 mb-4">
                 <div class="card bg-success text-white mb-4 shadow-lg">
                     <div class="card-body">
-                        <h5 class="card-title">Total Pendapatan (Bulan Ini)</h5>
-                        <h2 class="mb-0">Rp {{ pendapatan_bulan_ini|floatformat:0|intcomma }}</h2>
-                        <p class="mb-0">{{ transaksi_selesai_bulan_ini }} transaksi selesai</p>
+                        <h5 class="card-title"><i class="fas fa-money-bill-wave mr-2"></i>Total Pendapatan (Keseluruhan)</h5>
+                        <h3 class="mb-0">Rp {{ total_pendapatan_keseluruhan|floatformat:0|intcomma }}</h3>
+                        <p class="mb-0">{{ transaksi_selesai_keseluruhan }} transaksi selesai</p>
                     </div>
                 </div>
-
                 <div class="card shadow-lg">
                     <div class="card-header bg-white">
                         <h5 class="mb-0">Feedback Pelanggan Terbaru</h5>
@@ -245,4 +250,48 @@
             }
         });
     </script>
+
+    <!-- Shortcut Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-lg">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-external-link-alt mr-2"></i>Akses Cepat ke Laporan</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'admin:core_pelanggan_changelist' %}" class="btn btn-outline-primary btn-block">
+                                <i class="fas fa-users mr-2"></i>Data Pelanggan
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'admin:core_produk_changelist' %}" class="btn btn-outline-success btn-block">
+                                <i class="fas fa-box-open mr-2"></i>Data Produk
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'admin:core_sopir_changelist' %}" class="btn btn-outline-info btn-block">
+                                <i class="fas fa-user-tie mr-2"></i>Data Sopir
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'admin:core_feedback_changelist' %}" class="btn btn-outline-warning btn-block">
+                                <i class="fas fa-comment-dots mr-2"></i>Data Feedback
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'custom_admin:core_pemesanan_laporan' %}" class="btn btn-outline-danger btn-block">
+                                <i class="fas fa-file-invoice-dollar mr-2"></i>Laporan Pendapatan
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'custom_admin:core_pemesanan_laporan' %}" class="btn btn-outline-dark btn-block">
+                                <i class="fas fa-chart-line mr-2"></i>Laporan Pemesanan
+                            </a>
+                        </div>                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

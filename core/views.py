@@ -58,8 +58,17 @@ def create_pdf_header(canvas, title, date_range=None):
     current_date = timezone.now().strftime("%d %B %Y")
     canvas.drawCentredString(A4[0]/2, 30, f"Tanggal Cetak: {current_date}")
 
-# Preview views
-def admin_dashboard(request):
+def get_dashboard_context():
+    """
+    Get dashboard context data without rendering template
+    """
+    from django.utils import timezone
+    from datetime import timedelta
+    from django.db.models import Sum
+    from decimal import Decimal
+    import json
+    from .models import Pemesanan, Produk, Feedback
+    
     now = timezone.now()
     
     # 1. Calculation: Start/End of Current Month
@@ -71,16 +80,20 @@ def admin_dashboard(request):
     
     twenty_four_hours_ago = now - timedelta(hours=24)
     
-    # --- Urgency & Metrik Lainnya (Semua perhitungan Count dan Sum tetap) ---
+    # --- Business Metrics Calculation ---
+    # Pesanan Perlu Perhatian: Jumlah Pemesanan dengan status='Diproses' dan tanggalPemesanan lebih dari 24 jam yang lalu
     pesanan_perlu_perhatian = Pemesanan.objects.filter(
-        status__in=['Diproses', 'Dikirim'],
+        status='Diproses',
         tanggalPemesanan__lte=twenty_four_hours_ago
     ).count()
     
+    # Total Pesanan Diproses: Jumlah Pemesanan dengan status='Diproses'
     total_pesanan_diproses = Pemesanan.objects.filter(status='Diproses').count()
     
+    # Total Pengiriman Aktif: Jumlah Pemesanan dengan status='Dikirim'
     total_pengiriman_aktif = Pemesanan.objects.filter(status='Dikirim').count()
     
+    # Total Pendapatan (Bulan Ini): Total Pemesanan.total di mana status='Selesai' pada bulan berjalan
     pendapatan_bulan_ini_result = Pemesanan.objects.filter(
         status='Selesai',
         tanggalPemesanan__gte=start_of_month,
@@ -89,14 +102,30 @@ def admin_dashboard(request):
     
     pendapatan_bulan_ini = pendapatan_bulan_ini_result if pendapatan_bulan_ini_result is not None else Decimal('0')
     
+    # Total Pendapatan (Keseluruhan): Total Pemesanan.total di mana status='Selesai' (tanpa filter tanggal)
+    total_pendapatan_keseluruhan_result = Pemesanan.objects.filter(
+        status='Selesai'
+    ).aggregate(Sum('total'))['total__sum']
+    
+    total_pendapatan_keseluruhan = total_pendapatan_keseluruhan_result if total_pendapatan_keseluruhan_result is not None else Decimal('0')
+    
+    # Transaksi Selesai (Bulan Ini): Jumlah Pemesanan di mana status='Selesai' pada bulan berjalan
     transaksi_selesai_bulan_ini = Pemesanan.objects.filter(
         status='Selesai',
         tanggalPemesanan__gte=start_of_month,
         tanggalPemesanan__lt=end_of_month
     ).count()
     
-    produk_stok_menipis = Produk.objects.filter(stok__lt=10).count()
-    feedback_terbaru = Feedback.objects.all().order_by('-tanggal')[:3]
+    # Transaksi Selesai (Keseluruhan): Jumlah Pemesanan di mana status='Selesai' (tanpa filter tanggal)
+    transaksi_selesai_keseluruhan = Pemesanan.objects.filter(
+        status='Selesai'
+    ).count()
+    
+    # Produk Stok Menipis: Jumlah Produk dengan stok <= 10
+    produk_stok_menipis = Produk.objects.filter(stok__lte=10).count()
+    
+    # Feedback Terbaru: 1-2 entri terbaru dari model Feedback
+    feedback_terbaru = Feedback.objects.all().order_by('-tanggal')[:2]
     
     # --- 6-Month Revenue Data (Chart) ---
     months = []
@@ -110,6 +139,7 @@ def admin_dashboard(request):
             
     start_date_filter = current_date.replace(day=1)
     
+    from django.db.models.functions import Extract
     revenue_data = Pemesanan.objects.filter(
         status='Selesai',
         tanggalPemesanan__gte=start_date_filter
@@ -142,8 +172,8 @@ def admin_dashboard(request):
         'pesanan_perlu_perhatian': pesanan_perlu_perhatian,
         'total_pesanan_diproses': total_pesanan_diproses,
         'total_pengiriman_aktif': total_pengiriman_aktif,
-        'pendapatan_bulan_ini': pendapatan_bulan_ini, 
-        'transaksi_selesai_bulan_ini': transaksi_selesai_bulan_ini,
+        'total_pendapatan_keseluruhan': total_pendapatan_keseluruhan,
+        'transaksi_selesai_keseluruhan': transaksi_selesai_keseluruhan,
         'produk_stok_menipis': produk_stok_menipis,
         'feedback_terbaru': feedback_terbaru,
         # Kirim string JSON
@@ -152,8 +182,12 @@ def admin_dashboard(request):
         'twenty_four_hours_ago': twenty_four_hours_ago.strftime('%Y-%m-%d')
     }
     
-    return render(request, 'core/dashboard.html', context)
+    return context
 
+# Preview views
+def admin_dashboard(request):
+    context = get_dashboard_context()
+    return render(request, 'core/dashboard.html', context)
 def admin_laporan_pelanggan(request):
     # Get filter parameters
     tgl_mulai = request.GET.get('tgl_mulai')

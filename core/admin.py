@@ -20,7 +20,26 @@ class CustomAdminSite(admin.AdminSite):
     site_title = 'Viquam Admin'
     index_title = 'Dashboard'
     index_template = 'core/dashboard.html'
-
+    
+    def index(self, request, extra_context=None):
+        """
+        Override the default admin index view to use our custom dashboard
+        """
+        # Import here to avoid circular imports
+        from . import views
+        
+        # Get the dashboard context from our view
+        dashboard_context = views.get_dashboard_context()
+        
+        # Merge with any extra context
+        if extra_context is None:
+            extra_context = {}
+        extra_context.update(dashboard_context)
+        
+        # Add user information to context
+        extra_context['user'] = request.user
+        
+        return super().index(request, extra_context)
 # Instantiate the custom admin site
 custom_admin_site = CustomAdminSite(name='custom_admin')
 
@@ -131,15 +150,11 @@ class PemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
     search_fields = ('idPelanggan__nama', 'idPemesanan__startswith')
     date_hierarchy = 'tanggalPemesanan'
     
-    readonly_fields = ('total', 'tanggalPemesanan') 
-    
-    inlines = [DetailPemesananInline]
-
-    autocomplete_fields = ['idPelanggan', 'idSopir'] 
+    readonly_fields = ('total',) 
     
     fieldsets = (
         ('Informasi Dasar Pemesanan', {
-            'fields': ('idPelanggan', 'alamatPengiriman', 'status', 'idSopir', 'total')
+            'fields': ('idPelanggan', 'alamatPengiriman', 'status', 'idSopir', 'total', 'tanggalPemesanan')
         }),
         ('Bukti Transaksi (Opsional)', {
             'fields': ('buktiBayar', 'fotoPengiriman'),
@@ -147,13 +162,17 @@ class PemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
         }),
     )
 
+    inlines = [DetailPemesananInline]
+
+    autocomplete_fields = ['idPelanggan', 'idSopir'] 
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
             path('laporan/pelanggan/', self.admin_site.admin_view(views.admin_laporan_pelanggan), name='laporan-pelanggan'),
             path('laporan/produk/', self.admin_site.admin_view(views.admin_laporan_produk), name='laporan-produk'),
             path('laporan/sopir-kendaraan/', self.admin_site.admin_view(views.admin_laporan_sopir_kendaraan), name='laporan-sopir-kendaraan'),
-            path('laporan/pemesanan-pendapatan/', self.admin_site.admin_view(views.admin_laporan_pemesanan_pendapatan), name='laporan-pemesanan-pendapatan'),
+            path('laporan/pemesanan-pendapatan/', self.admin_site.admin_view(views.admin_laporan_pemesanan_pendapatan), name='core_pemesanan_laporan'),
             path('laporan/feedback/', self.admin_site.admin_view(views.admin_laporan_feedback), name='laporan-feedback'),
             path('laporan/pelanggan/pdf/', self.admin_site.admin_view(views.laporan_pelanggan), name='laporan-pelanggan-pdf'),
             path('laporan/produk/pdf/', self.admin_site.admin_view(views.laporan_produk), name='laporan-produk-pdf'),
@@ -162,7 +181,6 @@ class PemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
             path('laporan/feedback/pdf/', self.admin_site.admin_view(views.laporan_feedback), name='laporan-feedback-pdf'),
         ]
         return custom_urls + urls
-
 
 @admin.register(Feedback, site=custom_admin_site)
 class FeedbackAdmin(ActionColumnMixin, admin.ModelAdmin):

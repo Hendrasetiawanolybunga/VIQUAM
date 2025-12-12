@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import F, Sum
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password, check_password 
+from django.utils import timezone
 
 class Pelanggan(models.Model):
     idPelanggan = models.AutoField(primary_key=True, verbose_name='ID Pelanggan')
@@ -126,7 +127,7 @@ class Pemesanan(models.Model):
     
     idPemesanan = models.AutoField(primary_key=True, verbose_name='ID Pemesanan')
     idPelanggan = models.ForeignKey(Pelanggan, on_delete=models.PROTECT, verbose_name='Pelanggan') 
-    tanggalPemesanan = models.DateTimeField(auto_now_add=True, verbose_name='Tanggal Pemesanan')
+    tanggalPemesanan = models.DateTimeField(default=timezone.now, verbose_name='Tanggal Pemesanan')
     alamatPengiriman = models.CharField(max_length=200, verbose_name='Alamat Pengiriman')
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name='Total Harga') 
     buktiBayar = models.ImageField(upload_to='bukti_pembayaran/', null=True, blank=True, verbose_name='Bukti Pembayaran')
