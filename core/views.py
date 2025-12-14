@@ -6,17 +6,19 @@ from datetime import timedelta
 from decimal import Decimal
 import json
 from django.contrib import messages
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.db import transaction
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 
 from reportlab.pdfgen import canvas
-from reportlab.platypus import Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import cm
 from io import BytesIO
 
 from .models import Pelanggan, Sopir, Kendaraan, Produk, StokMasuk, Pemesanan, DetailPemesanan, Feedback
@@ -369,8 +371,25 @@ def admin_laporan_pemesanan_pendapatan(request):
     if status_pesanan:
         pemesanan_list = pemesanan_list.filter(status=status_pesanan)
     
-    # Calculate total revenue
-    total_pendapatan = pemesanan_list.aggregate(total=Sum('total'))['total'] or 0
+    # Calculate total revenue - only from 'Selesai' orders
+    pendapatan_queryset = Pemesanan.objects.filter(status='Selesai')
+    
+    # Apply the same date filters to pendapatan queryset
+    if tgl_mulai:
+        pendapatan_queryset = pendapatan_queryset.filter(
+            tanggalPemesanan__date__gte=tgl_mulai
+        )
+    if tgl_akhir:
+        pendapatan_queryset = pendapatan_queryset.filter(
+            tanggalPemesanan__date__lte=tgl_akhir
+        )
+    
+    # If status filter is applied and it's 'Selesai', use the same queryset
+    if status_pesanan == 'Selesai':
+        total_pendapatan = pemesanan_list.aggregate(total=Sum('total'))['total'] or 0
+    else:
+        # Otherwise, calculate from 'Selesai' orders separately
+        total_pendapatan = pendapatan_queryset.aggregate(total=Sum('total'))['total'] or 0
     
     # Process data for each order
     pemesanan_data = []
@@ -434,8 +453,11 @@ def laporan_pelanggan(request):
     
     # Create a PDF buffer
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
+    
+    # Create the PDF object, using the buffer as its "file."
+    doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                           leftMargin=2*cm, rightMargin=2*cm,
+                           topMargin=2*cm, bottomMargin=2*cm)
     
     # Get filter parameters
     tgl_mulai = request.GET.get('tgl_mulai')
@@ -455,15 +477,52 @@ def laporan_pelanggan(request):
         ).values_list('idPelanggan', flat=True)
         pelanggan_list = pelanggan_list.filter(idPelanggan__in=pelanggan_dengan_pesanan)
     
-    # Add header
-    create_pdf_header(p, "Data Pelanggan", date_range)
+    # Container for the 'Flowable' objects
+    story = []
+    
+    # Add company header
+    styles = getSampleStyleSheet()
+    title_style = styles['Title']
+    normal_style = styles['Normal']
+    
+    # Set font size for title
+    title_style.fontSize = 12
+    title_style.alignment = 1  # Center alignment
+    
+    # Title
+    title = Paragraph("Laporan Data Pelanggan VIQUAM", title_style)
+    story.append(title)
+    
+    # Company address
+    address_style = normal_style.clone('Address')
+    address_style.fontSize = 8 
+    address_style.alignment = 1  # Center alignment
+    address = Paragraph("Jl. Cendrawasih, Lahilai Bissi Kopan, Kec. Kota Lama, Kota Kupang Nusa Tenggara Timur.", address_style)
+    story.append(address)
+    
+    # Date range if provided
+    if date_range:
+        date_paragraph = Paragraph(f"Periode: {date_range}", address_style)
+        story.append(date_paragraph)
+    
+    # Add spacer between address/date and horizontal line
+    story.append(Spacer(1, 12))
+    
+    # Horizontal line (moved above table)
+    # Using a 1x1 table for reliable horizontal line placement
+    line_table = Table([['']], colWidths=[16*cm], rowHeights=[1])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (0, 0), 2, colors.black),  # Increased line thickness to 2
+        ('LEFTPADDING', (0, 0), (0, 0), 0),
+        ('RIGHTPADDING', (0, 0), (0, 0), 0),
+        ('TOPPADDING', (0, 0), (0, 0), 0),
+        ('BOTTOMPADDING', (0, 0), (0, 0), 0),
+    ]))
+    story.append(line_table)
+    story.append(Spacer(1, 12))
     
     # Prepare data for table
-    data = [['No', 'Nama', 'No WA', 'Alamat', 'Username', 'Total Pembelian']]
-    
-    y_position = 700
-    styles = getSampleStyleSheet()
-    styleN = styles["Normal"]
+    data = [['No.', 'Nama', 'No WA', 'Alamat', 'Username', 'Total Pembelian']]
     
     for i, pelanggan in enumerate(pelanggan_list, 1):
         # Calculate total purchases for this customer
@@ -482,7 +541,7 @@ def laporan_pelanggan(request):
         data.append(row)
     
     # Create table with improved styling
-    table = Table(data, colWidths=None)
+    table = Table(data, colWidths=[1.5*cm, 3*cm, 3*cm, 4*cm, 2.5*cm, 3*cm])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -494,18 +553,35 @@ def laporan_pelanggan(request):
         ('FONTSIZE', (0, 1), (-1, -1), 9),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ]))
     
-    # Center the table horizontally
-    table.hAlign = 'CENTER'
+    story.append(table)
+    story.append(Spacer(1, 24))
     
-    # Draw table
-    table.wrapOn(p, width, height)
-    table.drawOn(p, (width - table.minWidth()) / 2, y_position - len(data) * 20)
+    # Add signature section (positioned at bottom right)
+    story.append(Spacer(1, 200))  # Push signature to bottom
+    signature_data = [
+        ['', 'Kupang, ......................'],
+        ['', 'Mengetahui,'],
+        ['', ''],
+        ['', ''],
+        ['', '(Alain N. Susanto)']
+    ]
     
-    # Save PDF
-    p.showPage()
-    p.save()
+    signature_table = Table(signature_data, colWidths=[8*cm, 8*cm])
+    signature_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (1, -1), (1, -1), 30),
+    ]))
+    
+    story.append(signature_table)
+    
+    # Build PDF
+    doc.build(story)
     
     # Get the value of the BytesIO buffer and write it to the response
     pdf = buffer.getvalue()
@@ -517,9 +593,13 @@ def laporan_produk(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="laporan_produk.pdf"'
     
+    # Create a PDF buffer
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
+    
+    # Create the PDF object, using the buffer as its "file."
+    doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                           leftMargin=2*cm, rightMargin=2*cm,
+                           topMargin=2*cm, bottomMargin=2*cm)
     
     filter_tipe = request.GET.get('filter_tipe')
     batas_stok = request.GET.get('batas_stok', 10)
@@ -558,13 +638,52 @@ def laporan_produk(request):
     elif filter_tipe == 'stok_menipis':
         produk_list = produk_list.filter(stok__lte=batas_stok).order_by('stok')
     
-    create_pdf_header(p, "Produk & Stok", date_range)
+    # Container for the 'Flowable' objects
+    story = []
     
-    data = [['No', 'Nama Produk', 'Ukuran', 'Harga', 'Stok', 'Terjual']]
-    
-    y_position = 700
+    # Add company header
     styles = getSampleStyleSheet()
-    styleN = styles["Normal"]
+    title_style = styles['Title']
+    normal_style = styles['Normal']
+    
+    # Set font size for title
+    title_style.fontSize = 12
+    title_style.alignment = 1  # Center alignment
+    
+    # Title
+    title = Paragraph("Laporan Data Produk & Stok VIQUAM", title_style)
+    story.append(title)
+    
+    # Company address
+    address_style = normal_style.clone('Address')
+    address_style.fontSize = 10  # Set font size to 10pt
+    address_style.alignment = 1  # Center alignment
+    address = Paragraph("Jl. Cendrawasih, Lahilai Bissi Kopan, Kec. Kota Lama, Kota Kupang Nusa Tenggara Timur.", address_style)
+    story.append(address)
+    
+    # Date range if provided
+    if date_range:
+        date_paragraph = Paragraph(f"Periode: {date_range}", address_style)
+        story.append(date_paragraph)
+    
+    # Add spacer between address/date and horizontal line
+    story.append(Spacer(1, 12))
+    
+    # Horizontal line (moved above table)
+    # Using a 1x1 table for reliable horizontal line placement
+    line_table = Table([['']], colWidths=[16*cm], rowHeights=[1])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (0, 0), 2, colors.black),  # Increased line thickness to 2
+        ('LEFTPADDING', (0, 0), (0, 0), 0),
+        ('RIGHTPADDING', (0, 0), (0, 0), 0),
+        ('TOPPADDING', (0, 0), (0, 0), 0),
+        ('BOTTOMPADDING', (0, 0), (0, 0), 0),
+    ]))
+    story.append(line_table)
+    story.append(Spacer(1, 12))
+    
+    # Prepare data for table
+    data = [['No.', 'Nama Produk', 'Ukuran', 'Harga', 'Stok', 'Terjual']]
     
     for i, produk in enumerate(produk_list, 1):
         product_date_filter_q = None
@@ -578,10 +697,16 @@ def laporan_produk(request):
             
         total_terjual = 0
         if filter_tipe == 'terlaris' or (tgl_mulai or tgl_akhir):
-            total_terjual_queryset = DetailPemesanan.objects.filter(idProduk=produk)
             if product_date_filter_q:
-                total_terjual_queryset = total_terjual_queryset.filter(product_date_filter_q)
-            total_terjual = total_terjual_queryset.aggregate(total=Sum('jumlah'))['total'] or 0
+                total_terjual = produk.detailpemesanan_set.filter(product_date_filter_q).aggregate(
+                    total=Sum('jumlah')
+                )['total'] or 0
+            else:
+                total_terjual = produk.detailpemesanan_set.aggregate(
+                    total=Sum('jumlah')
+                )['total'] or 0
+        else:
+            total_terjual = getattr(produk, 'total_terjual', 0) or 0
         
         row = [
             str(i),
@@ -589,11 +714,12 @@ def laporan_produk(request):
             produk.ukuranKemasan,
             format_rupiah(produk.hargaPerDus),
             str(produk.stok),
-            str(total_terjual) if (filter_tipe == 'terlaris' or (tgl_mulai or tgl_akhir)) else "-"
+            str(total_terjual)
         ]
         data.append(row)
     
-    table = Table(data, colWidths=None)
+    # Create table with improved styling
+    table = Table(data, colWidths=[1.5*cm, 4*cm, 2.5*cm, 3*cm, 2*cm, 2.5*cm])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -605,16 +731,38 @@ def laporan_produk(request):
         ('FONTSIZE', (0, 1), (-1, -1), 9),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ]))
     
-    table.hAlign = 'CENTER'
+    story.append(table)
+    story.append(Spacer(1, 24))
     
-    table.wrapOn(p, width, height)
-    table.drawOn(p, (width - table.minWidth()) / 2, y_position - len(data) * 20)
+    # Add signature section (positioned at bottom right)
+    story.append(Spacer(1, 200))  # Push signature to bottom
+    signature_data = [
+        ['', 'Kupang, ......................'],
+        ['', 'Mengetahui,'],
+        ['', ''],
+        ['', ''],
+        ['', '(Alain N. Susanto)']
+    ]
     
-    p.showPage()
-    p.save()
+    signature_table = Table(signature_data, colWidths=[8*cm, 8*cm])
+    signature_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (1, -1), (1, -1), 30),
+        ('LINEBELOW', (1, -1), (1, -1), 1, colors.black),
+    ]))
     
+    story.append(signature_table)
+    
+    # Build PDF
+    doc.build(story)
+    
+    # Get the value of the BytesIO buffer and write it to the response
     pdf = buffer.getvalue()
     buffer.close()
     response.write(pdf)
@@ -626,8 +774,11 @@ def laporan_sopir_kendaraan(request):
     
     # Create a PDF buffer
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
+    
+    # Create the PDF object, using the buffer as its "file."
+    doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                           leftMargin=2*cm, rightMargin=2*cm,
+                           topMargin=2*cm, bottomMargin=2*cm)
     
     # Get filter parameters
     tgl_mulai = request.GET.get('tgl_mulai')
@@ -641,15 +792,52 @@ def laporan_sopir_kendaraan(request):
     if tgl_mulai and tgl_akhir:
         date_range = f"{tgl_mulai} - {tgl_akhir}"
     
-    # Add header
-    create_pdf_header(p, "Sopir & Kendaraan", date_range)
+    # Container for the 'Flowable' objects
+    story = []
+    
+    # Add company header
+    styles = getSampleStyleSheet()
+    title_style = styles['Title']
+    normal_style = styles['Normal']
+    
+    # Set font size for title
+    title_style.fontSize = 12
+    title_style.alignment = 1  # Center alignment
+    
+    # Title
+    title = Paragraph("Laporan Data Sopir & Kendaraan VIQUAM", title_style)
+    story.append(title)
+    
+    # Company address
+    address_style = normal_style.clone('Address')
+    address_style.fontSize = 10  # Set font size to 10pt
+    address_style.alignment = 1  # Center alignment
+    address = Paragraph("Jl. Cendrawasih, Lahilai Bissi Kopan, Kec. Kota Lama, Kota Kupang Nusa Tenggara Timur.", address_style)
+    story.append(address)
+    
+    # Date range if provided
+    if date_range:
+        date_paragraph = Paragraph(f"Periode: {date_range}", address_style)
+        story.append(date_paragraph)
+    
+    # Add spacer between address/date and horizontal line
+    story.append(Spacer(1, 12))
+    
+    # Horizontal line (moved above table)
+    # Using a 1x1 table for reliable horizontal line placement
+    line_table = Table([['']], colWidths=[16*cm], rowHeights=[1])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (0, 0), 2, colors.black),  # Increased line thickness to 2
+        ('LEFTPADDING', (0, 0), (0, 0), 0),
+        ('RIGHTPADDING', (0, 0), (0, 0), 0),
+        ('TOPPADDING', (0, 0), (0, 0), 0),
+        ('BOTTOMPADDING', (0, 0), (0, 0), 0),
+    ]))
+    story.append(line_table)
+    story.append(Spacer(1, 12))
     
     # Prepare data for table
-    data = [['No', 'Nama Sopir', 'No HP', 'Username', 'Kendaraan', 'Pesanan Selesai']]
-    
-    y_position = 700
-    styles = getSampleStyleSheet()
-    styleN = styles["Normal"]
+    data = [['No.', 'Nama Sopir', 'No HP', 'Username', 'Kendaraan', 'Pesanan Selesai']]
     
     for i, sopir in enumerate(sopir_list, 1):
         # Get driver's vehicle
@@ -672,7 +860,7 @@ def laporan_sopir_kendaraan(request):
                 tanggalPemesanan__date__lte=tgl_akhir
             )
             
-        pesanan_selesai = pesanan_selesai_queryset.count()
+        pesanan_selesai_count = pesanan_selesai_queryset.count()
         
         row = [
             str(i),
@@ -680,12 +868,12 @@ def laporan_sopir_kendaraan(request):
             sopir.noHp,
             sopir.username,
             nama_kendaraan,
-            str(pesanan_selesai)
+            str(pesanan_selesai_count)
         ]
         data.append(row)
     
     # Create table with improved styling
-    table = Table(data, colWidths=None)
+    table = Table(data, colWidths=[1.5*cm, 3*cm, 3*cm, 2.5*cm, 4*cm, 3*cm])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -697,18 +885,35 @@ def laporan_sopir_kendaraan(request):
         ('FONTSIZE', (0, 1), (-1, -1), 9),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ]))
     
-    # Center the table horizontally
-    table.hAlign = 'CENTER'
+    story.append(table)
+    story.append(Spacer(1, 24))
     
-    # Draw table
-    table.wrapOn(p, width, height)
-    table.drawOn(p, (width - table.minWidth()) / 2, y_position - len(data) * 20)
+    # Add signature section (positioned at bottom right)
+    story.append(Spacer(1, 200))  # Push signature to bottom
+    signature_data = [
+        ['', 'Kupang, ......................'],
+        ['', 'Mengetahui,'],
+        ['', ''],
+        ['', ''],
+        ['', '(Alain N. Susanto)']
+    ]
     
-    # Save PDF
-    p.showPage()
-    p.save()
+    signature_table = Table(signature_data, colWidths=[8*cm, 8*cm])
+    signature_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),n        ('TOPPADDING', (1, -1), (1, -1), 30),
+        ('LINEBELOW', (1, -1), (1, -1), 1, colors.black),
+    ]))
+    
+    story.append(signature_table)
+    
+    # Build PDF
+    doc.build(story)
     
     # Get the value of the BytesIO buffer and write it to the response
     pdf = buffer.getvalue()
@@ -722,8 +927,11 @@ def laporan_pemesanan_pendapatan(request):
     
     # Create a PDF buffer
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
+    
+    # Create the PDF object, using the buffer as its "file."
+    doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                           leftMargin=2*cm, rightMargin=2*cm,
+                           topMargin=2*cm, bottomMargin=2*cm)
     
     # Get filter parameters
     tgl_mulai = request.GET.get('tgl_mulai')
@@ -758,19 +966,56 @@ def laporan_pemesanan_pendapatan(request):
     # Calculate total revenue
     total_pendapatan = pemesanan_list.aggregate(total=Sum('total'))['total'] or 0
     
-    # Add header
-    create_pdf_header(p, "Pemesanan & Pendapatan", date_range)
+    # Container for the 'Flowable' objects
+    story = []
     
-    # Add total revenue
-    p.setFont("Helvetica-Bold", 12)
-    p.drawCentredString(A4[0]/2, 720, f"Total Pendapatan: {format_rupiah(total_pendapatan)}")
+    # Add company header
+    styles = getSampleStyleSheet()
+    title_style = styles['Title']
+    normal_style = styles['Normal']
+    
+    # Set font size for title
+    title_style.fontSize = 12
+    title_style.alignment = 1  # Center alignment
+    
+    # Title
+    title = Paragraph("Laporan Data Pemesanan & Pendapatan VIQUAM", title_style)
+    story.append(title)
+    
+    # Company address
+    address_style = normal_style.clone('Address')
+    address_style.fontSize = 10  # Set font size to 10pt
+    address_style.alignment = 1  # Center alignment
+    address = Paragraph("Jl. Cendrawasih, Lahilai Bissi Kopan, Kec. Kota Lama, Kota Kupang Nusa Tenggara Timur.", address_style)
+    story.append(address)
+    
+    # Date range if provided
+    if date_range:
+        date_paragraph = Paragraph(f"Periode: {date_range}", address_style)
+        story.append(date_paragraph)
+    
+    # Add spacer between address/date and horizontal line
+    story.append(Spacer(1, 12))
+    
+    # Total revenue
+    total_paragraph = Paragraph(f"<b>Total Pendapatan:</b> {format_rupiah(total_pendapatan)}", normal_style)
+    story.append(total_paragraph)
+    
+    # Horizontal line (moved above table)
+    # Using a 1x1 table for reliable horizontal line placement
+    line_table = Table([['']], colWidths=[16*cm], rowHeights=[1])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (0, 0), 2, colors.black),  # Increased line thickness to 2
+        ('LEFTPADDING', (0, 0), (0, 0), 0),
+        ('RIGHTPADDING', (0, 0), (0, 0), 0),
+        ('TOPPADDING', (0, 0), (0, 0), 0),
+        ('BOTTOMPADDING', (0, 0), (0, 0), 0),
+    ]))
+    story.append(line_table)
+    story.append(Spacer(1, 12))
     
     # Prepare data for table
-    data = [['No', 'Tanggal', 'Pelanggan', 'Alamat', 'Status', 'Total']]
-    
-    y_position = 680
-    styles = getSampleStyleSheet()
-    styleN = styles["Normal"]
+    data = [['No.', 'Tanggal', 'Pelanggan', 'Alamat', 'Status', 'Total']]
     
     for i, pemesanan in enumerate(pemesanan_list, 1):
         row = [
@@ -784,7 +1029,7 @@ def laporan_pemesanan_pendapatan(request):
         data.append(row)
     
     # Create table with improved styling
-    table = Table(data, colWidths=None)
+    table = Table(data, colWidths=[1.5*cm, 3*cm, 3*cm, 4*cm, 2.5*cm, 3*cm])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -796,18 +1041,36 @@ def laporan_pemesanan_pendapatan(request):
         ('FONTSIZE', (0, 1), (-1, -1), 9),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ]))
     
-    # Center the table horizontally
-    table.hAlign = 'CENTER'
+    story.append(table)
+    story.append(Spacer(1, 24))
     
-    # Draw table
-    table.wrapOn(p, width, height)
-    table.drawOn(p, (width - table.minWidth()) / 2, y_position - len(data) * 20)
+    # Add signature section (positioned at bottom right)
+    story.append(Spacer(1, 200))  # Push signature to bottom
+    signature_data = [
+        ['', 'Kupang, ......................'],
+        ['', 'Mengetahui,'],
+        ['', ''],
+        ['', ''],
+        ['', '(Alain N. Susanto)']
+    ]
     
-    # Save PDF
-    p.showPage()
-    p.save()
+    signature_table = Table(signature_data, colWidths=[8*cm, 8*cm])
+    signature_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (1, -1), (1, -1), 30),
+        ('LINEBELOW', (1, -1), (1, -1), 1, colors.black),
+    ]))
+    
+    story.append(signature_table)
+    
+    # Build PDF
+    doc.build(story)
     
     # Get the value of the BytesIO buffer and write it to the response
     pdf = buffer.getvalue()
@@ -821,8 +1084,11 @@ def laporan_feedback(request):
     
     # Create a PDF buffer
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
+    
+    # Create the PDF object, using the buffer as its "file."
+    doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                           leftMargin=2*cm, rightMargin=2*cm,
+                           topMargin=2*cm, bottomMargin=2*cm)
     
     # Get filter parameters
     tgl_mulai = request.GET.get('tgl_mulai')
@@ -850,27 +1116,64 @@ def laporan_feedback(request):
                 tanggal__date__lte=tgl_akhir
             )
     
-    # Add header
-    create_pdf_header(p, "Feedback Pelanggan", date_range)
+    # Container for the 'Flowable' objects
+    story = []
     
-    # Prepare data for table
-    data = [['No', 'Tanggal', 'Pelanggan', 'Feedback']]
-    
-    y_position = 700
+    # Add company header
     styles = getSampleStyleSheet()
-    styleN = styles["Normal"]
+    title_style = styles['Title']
+    normal_style = styles['Normal']
+    
+    # Set font size for title
+    title_style.fontSize = 12
+    title_style.alignment = 1  # Center alignment
+    
+    # Title
+    title = Paragraph("Laporan Data Feedback Pelanggan VIQUAM", title_style)
+    story.append(title)
+    
+    # Company address
+    address_style = normal_style.clone('Address')
+    address_style.fontSize = 10  # Set font size to 10pt
+    address_style.alignment = 1  # Center alignment
+    address = Paragraph("Jl. Cendrawasih, Lahilai Bissi Kopan, Kec. Kota Lama, Kota Kupang Nusa Tenggara Timur.", address_style)
+    story.append(address)
+    
+    # Date range if provided
+    if date_range:
+        date_paragraph = Paragraph(f"Periode: {date_range}", address_style)
+        story.append(date_paragraph)
+    
+    # Add spacer between address/date and horizontal line
+    story.append(Spacer(1, 12))
+    
+    # Horizontal line (moved above table)
+    # Using a 1x1 table for reliable horizontal line placement
+    line_table = Table([['']], colWidths=[16*cm], rowHeights=[1])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (0, 0), 2, colors.black),  # Increased line thickness to 2
+        ('LEFTPADDING', (0, 0), (0, 0), 0),
+        ('RIGHTPADDING', (0, 0), (0, 0), 0),
+        ('TOPPADDING', (0, 0), (0, 0), 0),
+        ('BOTTOMPADDING', (0, 0), (0, 0), 0),
+    ]))
+    story.append(line_table)
+    story.append(Spacer(1, 12))
+    
+    # Prepare data for table (without Rating column as requested)
+    data = [['No.', 'Nama Pelanggan', 'Subjek', 'Tanggal']]
     
     for i, feedback in enumerate(feedback_list, 1):
         row = [
             str(i),
-            feedback.tanggal.strftime("%d/%m/%Y"),
             feedback.idPelanggan.nama,
-            feedback.isi[:50] + "..." if len(feedback.isi) > 50 else feedback.isi
+            feedback.isi[:30] + "..." if len(feedback.isi) > 30 else feedback.isi,
+            feedback.tanggal.strftime("%d/%m/%Y")
         ]
         data.append(row)
     
     # Create table with improved styling
-    table = Table(data, colWidths=None)
+    table = Table(data, colWidths=[1.5*cm, 4*cm, 6*cm, 3*cm])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -882,18 +1185,36 @@ def laporan_feedback(request):
         ('FONTSIZE', (0, 1), (-1, -1), 9),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ]))
     
-    # Center the table horizontally
-    table.hAlign = 'CENTER'
+    story.append(table)
+    story.append(Spacer(1, 24))
     
-    # Draw table
-    table.wrapOn(p, width, height)
-    table.drawOn(p, (width - table.minWidth()) / 2, y_position - len(data) * 20)
+    # Add signature section (positioned at bottom right)
+    story.append(Spacer(1, 200))  # Push signature to bottom
+    signature_data = [
+        ['', 'Kupang, ......................'],
+        ['', 'Mengetahui,'],
+        ['', ''],
+        ['', ''],
+        ['', '(Alain N. Susanto)']
+    ]
     
-    # Save PDF
-    p.showPage()
-    p.save()
+    signature_table = Table(signature_data, colWidths=[8*cm, 8*cm])
+    signature_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (1, -1), (1, -1), 30),
+        ('LINEBELOW', (1, -1), (1, -1), 1, colors.black),
+    ]))
+    
+    story.append(signature_table)
+    
+    # Build PDF
+    doc.build(story)
     
     # Get the value of the BytesIO buffer and write it to the response
     pdf = buffer.getvalue()
@@ -1063,10 +1384,11 @@ def pelanggan_login(request):
             
             try:
                 pelanggan = Pelanggan.objects.get(username=username)
+                
                 if pelanggan.check_password(password):
-                    # Store pelanggan info in session
                     request.session['pelanggan_id'] = pelanggan.idPelanggan
                     request.session['pelanggan_nama'] = pelanggan.nama
+                    
                     messages.success(request, f'Selamat datang, {pelanggan.nama}!')
                     return redirect('pelanggan_home')
                 else:
@@ -1186,7 +1508,7 @@ def tambah_ke_keranjang(request, pk):
         save_keranjang(request, keranjang)
         
         messages.success(request, f'{produk.namaProduk} berhasil ditambahkan ke keranjang!')
-        return redirect('view_keranjang')
+        return redirect('list_produk')
     
     return redirect('list_produk')
 

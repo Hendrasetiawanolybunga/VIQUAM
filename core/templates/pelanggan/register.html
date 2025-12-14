@@ -16,27 +16,23 @@
             --viquam-white: #FFFFFF;
         }
         
-        html {
+        html, body {
             scroll-behavior: smooth;
+            height: 100%;
         }
         
         body {
             background-color: var(--viquam-white);
             font-family: 'Poppins', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            padding: 20px;
             margin: 0;
         }
         
-        .register-container {
-            background-color: var(--viquam-white);
-            width: 100%;
+        .register-wrapper {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
         
         .register-card {
@@ -92,8 +88,7 @@
         
         /* Mobile Scaling */
         @media (max-width: 576px) {
-            body {
-                font-size: 0.8rem;
+            .register-wrapper {
                 padding: 10px;
             }
             
@@ -103,7 +98,6 @@
             
             .register-card {
                 border-radius: 8px;
-                margin: 10px;
             }
             
             .register-header {
@@ -127,105 +121,99 @@
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-12">
-                    <div class="register-card">
-                        <div class="register-header">
-                            <h3><i class="fas fa-user-plus me-2"></i>Register Akun VIQUAM</h3>
-                            <p class="mb-0">Buat akun baru untuk memesan air mineral</p>
+    <div class="register-wrapper">
+        <div class="register-card">
+            <div class="register-header">
+                <h3><i class="fas fa-user-plus me-2"></i>Register Akun VIQUAM</h3>
+                <p class="mb-0">Buat akun baru untuk memesan air mineral</p>
+            </div>
+            <div class="register-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
-                        <div class="register-body">
-                            {% if messages %}
-                                {% for message in messages %}
-                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post" action="/register/">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.nama.id_for_label }}" class="form-label fw-bold">Nama Lengkap</label>
+                                {{ form.nama }}
+                                {% if form.nama.errors %}
+                                    <div class="text-danger">
+                                        {{ form.nama.errors }}
                                     </div>
-                                {% endfor %}
-                            {% endif %}
+                                {% endif %}
+                            </div>
                             
-                            <form method="post" action="/register/">
-                                {% csrf_token %}
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="{{ form.nama.id_for_label }}" class="form-label fw-bold">Nama Lengkap</label>
-                                            {{ form.nama }}
-                                            {% if form.nama.errors %}
-                                                <div class="text-danger">
-                                                    {{ form.nama.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label for="{{ form.noWa.id_for_label }}" class="form-label fw-bold">Nomor WhatsApp</label>
-                                            {{ form.noWa }}
-                                            {% if form.noWa.errors %}
-                                                <div class="text-danger">
-                                                    {{ form.noWa.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label for="{{ form.alamat.id_for_label }}" class="form-label fw-bold">Alamat Lengkap</label>
-                                            {{ form.alamat }}
-                                            {% if form.alamat.errors %}
-                                                <div class="text-danger">
-                                                    {{ form.alamat.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
+                            <div class="mb-3">
+                                <label for="{{ form.noWa.id_for_label }}" class="form-label fw-bold">Nomor WhatsApp</label>
+                                {{ form.noWa }}
+                                {% if form.noWa.errors %}
+                                    <div class="text-danger">
+                                        {{ form.noWa.errors }}
                                     </div>
-                                    
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="{{ form.username.id_for_label }}" class="form-label fw-bold">Username</label>
-                                            {{ form.username }}
-                                            {% if form.username.errors %}
-                                                <div class="text-danger">
-                                                    {{ form.username.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label for="{{ form.password.id_for_label }}" class="form-label fw-bold">Password</label>
-                                            {{ form.password }}
-                                            {% if form.password.errors %}
-                                                <div class="text-danger">
-                                                    {{ form.password.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        
-                                        <div class="mb-4">
-                                            <label for="{{ form.confirm_password.id_for_label }}" class="form-label fw-bold">Konfirmasi Password</label>
-                                            {{ form.confirm_password }}
-                                            {% if form.confirm_password.errors %}
-                                                <div class="text-danger">
-                                                    {{ form.confirm_password.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-grid">
-                                    <button type="submit" class="btn btn-register">
-                                        <i class="fas fa-user-plus me-2"></i>Register
-                                    </button>
-                                </div>
-                            </form>
+                                {% endif %}
+                            </div>
                             
-                            <div class="text-center mt-3">
-                                <p>Sudah punya akun? <a href="/login/">Login di sini</a></p>
+                            <div class="mb-3">
+                                <label for="{{ form.alamat.id_for_label }}" class="form-label fw-bold">Alamat Lengkap</label>
+                                {{ form.alamat }}
+                                {% if form.alamat.errors %}
+                                    <div class="text-danger">
+                                        {{ form.alamat.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.username.id_for_label }}" class="form-label fw-bold">Username</label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <div class="text-danger">
+                                        {{ form.username.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.password.id_for_label }}" class="form-label fw-bold">Password</label>
+                                {{ form.password }}
+                                {% if form.password.errors %}
+                                    <div class="text-danger">
+                                        {{ form.password.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="{{ form.confirm_password.id_for_label }}" class="form-label fw-bold">Konfirmasi Password</label>
+                                {{ form.confirm_password }}
+                                {% if form.confirm_password.errors %}
+                                    <div class="text-danger">
+                                        {{ form.confirm_password.errors }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-register">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p>Sudah punya akun? <a href="/login/">Login di sini</a></p>
                 </div>
             </div>
         </div>

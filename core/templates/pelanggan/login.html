@@ -16,27 +16,23 @@
             --viquam-white: #FFFFFF;
         }
         
-        html {
+        html, body {
             scroll-behavior: smooth;
+            height: 100%;
         }
         
         body {
             background-color: var(--viquam-white);
             font-family: 'Poppins', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            padding: 20px;
             margin: 0;
         }
         
-        .login-container {
-            background-color: var(--viquam-white);
-            width: 100%;
+        .login-wrapper {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
         
         .login-card {
@@ -92,8 +88,7 @@
         
         /* Mobile Scaling */
         @media (max-width: 576px) {
-            body {
-                font-size: 0.8rem;
+            .login-wrapper {
                 padding: 10px;
             }
             
@@ -103,7 +98,6 @@
             
             .login-card {
                 border-radius: 8px;
-                margin: 10px;
             }
             
             .login-header {
@@ -127,59 +121,53 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-12">
-                    <div class="login-card">
-                        <div class="login-header">
-                            <h3><i class="fas fa-sign-in-alt me-2"></i>Login VIQUAM</h3>
-                            <p class="mb-0">Masuk ke akun Anda</p>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <h3><i class="fas fa-sign-in-alt me-2"></i>Login VIQUAM</h3>
+                <p class="mb-0">Masuk ke akun Anda</p>
+            </div>
+            <div class="login-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
-                        <div class="login-body">
-                            {% if messages %}
-                                {% for message in messages %}
-                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                            
-                            <form method="post" action="/login/">
-                                {% csrf_token %}
-                                <div class="mb-4">
-                                    <label for="{{ form.username.id_for_label }}" class="form-label fw-bold">Username</label>
-                                    {{ form.username }}
-                                    {% if form.username.errors %}
-                                        <div class="text-danger">
-                                            {{ form.username.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <label for="{{ form.password.id_for_label }}" class="form-label fw-bold">Password</label>
-                                    {{ form.password }}
-                                    {% if form.password.errors %}
-                                        <div class="text-danger">
-                                            {{ form.password.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="d-grid">
-                                    <button type="submit" class="btn btn-login">
-                                        <i class="fas fa-sign-in-alt me-2"></i>Login
-                                    </button>
-                                </div>
-                            </form>
-                            
-                            <div class="text-center mt-3">
-                                <p>Belum punya akun? <a href="/register/">Register di sini</a></p>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post" action="/login/">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="{{ form.username.id_for_label }}" class="form-label fw-bold">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger">
+                                {{ form.username.errors }}
                             </div>
-                        </div>
+                        {% endif %}
                     </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.password.id_for_label }}" class="form-label fw-bold">Password</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="text-danger">
+                                {{ form.password.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-login">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p>Belum punya akun? <a href="/register/">Register di sini</a></p>
                 </div>
             </div>
         </div>

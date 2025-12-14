@@ -13,7 +13,8 @@ class Pelanggan(models.Model):
     password = models.CharField(max_length=150, verbose_name='Password (Hash)')
 
     def save(self, *args, **kwargs):
-        if len(self.password) < 128 or not self.password.startswith('pbkdf2_sha256'):
+        # PERBAIKAN KRITIS: HASH HANYA JIKA BUKAN HASH (Misal, panjangnya kurang dari hash pbkdf2)
+        if len(self.password) < 60 or not self.password.startswith('pbkdf2_sha256'):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
 

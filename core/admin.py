@@ -131,12 +131,7 @@ class DetailPemesananInline(admin.TabularInline):
     verbose_name_plural = 'Detail Produk'
 
 
-@admin.register(DetailPemesanan, site=custom_admin_site)
-class DetailPemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
-    list_display = ('idPemesanan', 'idProduk', 'jumlah', 'subTotal', 'actions_column')
-    list_filter = ('idPemesanan', 'idProduk')
-    search_fields = ('idPemesanan__idPelanggan__nama', 'idProduk__namaProduk')
-    autocomplete_fields = ['idPemesanan', 'idProduk']
+
 
 
 @admin.register(Pemesanan, site=custom_admin_site)
@@ -181,6 +176,24 @@ class PemesananAdmin(ActionColumnMixin, admin.ModelAdmin):
             path('laporan/feedback/pdf/', self.admin_site.admin_view(views.laporan_feedback), name='laporan-feedback-pdf'),
         ]
         return custom_urls + urls
+
+    def response_change(self, request, obj):
+        # Check if status has changed to "Dibatalkan"
+        if obj.status == 'Dibatalkan':
+            # Get the original object from database
+            from .models import DetailPemesanan, Produk
+            original_obj = self.model.objects.get(pk=obj.pk)
+            
+            # If status was not "Dibatalkan" before, return stock
+            if original_obj.status != 'Dibatalkan':
+                # Loop through all order details
+                for detail in obj.detailpemesanan_set.all():
+                    # Add quantity back to product stock
+                    product = detail.idProduk
+                    product.stok += detail.jumlah
+                    product.save()
+        
+        return super().response_change(request, obj)
 
 @admin.register(Feedback, site=custom_admin_site)
 class FeedbackAdmin(ActionColumnMixin, admin.ModelAdmin):

@@ -36,9 +36,9 @@
         <div class="card">
             <div class="card-body text-center">
                 {% if produk.foto %}
-                    <img src="{{ produk.foto.url }}" alt="{{ produk.namaProduk }}" class="img-fluid rounded" onerror="this.src='https://placehold.co/400x400/0b1d28/FFFFFF?text={{ produk.namaProduk|urlencode }}';">
+                    <img src="{{ produk.foto.url }}" alt="{{ produk.namaProduk }}" class="img-fluid rounded" style="height: 300px; object-fit: contain;" onerror="this.src='https://placehold.co/400x400/0b1d28/FFFFFF?text={{ produk.namaProduk|urlencode }}';">
                 {% else %}
-                    <img src="https://placehold.co/400x400/0b1d28/FFFFFF?text={{ produk.namaProduk|urlencode }}" alt="{{ produk.namaProduk }}" class="img-fluid rounded">
+                    <img src="https://placehold.co/400x400/0b1d28/FFFFFF?text={{ produk.namaProduk|urlencode }}" alt="{{ produk.namaProduk }}" class="img-fluid rounded" style="height: 300px; object-fit: contain;">
                 {% endif %}
             </div>
         </div>

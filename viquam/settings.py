@@ -198,7 +198,7 @@ JAZZMIN_SETTINGS = {
         # Laporan Pemesanan & Pendapatan
         {
             'name': 'L. Pemesanan & Pendapatan',
-            'url': 'admin:laporan-pemesanan-pendapatan',
+            'url': 'custom_admin:core_pemesanan_laporan',
             'icon': 'fas fa-money-bill-wave'
         },
         

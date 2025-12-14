@@ -49,8 +49,8 @@ class PelangganRegisterForm(forms.ModelForm):
     
     def save(self, commit=True):
         pelanggan = super().save(commit=False)
-        # Fix: Use make_password to hash the password correctly
-        pelanggan.password = make_password(self.cleaned_data['password'])
+        # Biarkan raw password ada di pelanggan.password
+        # Model akan menghashnya saat pelanggan.save() dipanggil
         if commit:
             pelanggan.save()
         return pelanggan
